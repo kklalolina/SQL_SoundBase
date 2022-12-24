@@ -1,0 +1,46 @@
+{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content %}
+
+<div class="container py-5 h-50" style="min-width:250px; width:50%; max-width:320px; margin-top:50px;">
+<form method="POST">
+  <h3 align="center"> Sign up</h3>
+  <div class="form-group" >
+    <label for="username">Username</label>
+    <input
+      type="username"
+      class="form-control"
+      id="username"
+      name="username"
+      placeholder="Username"
+    />
+  </div>
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input
+      type="password"
+      class="form-control"
+      id="password"
+      name="password"
+      placeholder="Password"
+    />
+  </div>
+    <div class="form-group">
+    <label for="cpassword">Confirm password</label>
+    <input
+      type="password"
+      class="form-control"
+      id="cpassword"
+      name="cpassword"
+      placeholder="Confirm password"
+    />
+  </div>
+  <br />
+  <button type="submit" class="btn btn-primary btn-block mb-4">Sign up</button>
+
+  <div class="text-center">
+    <p>Already have an account? <a href="/login">Login</a></p>
+  </div>
+</form>
+</div>
+
+
+{% endblock %}
