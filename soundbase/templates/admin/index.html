@@ -1,0 +1,24 @@
+{% extends "baseadmin.html" %} {% block title %}Admin panel{% endblock %} {% block content %}
+<style>
+      ul {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        list-style: none;
+        padding-top: 10%;
+      }
+      li {
+        margin-bottom: 10px;
+      }
+    </style>
+
+    <ul>
+        <h2 style="margin-bottom:30px;">Choose database</h2>
+      <li><a href="{{ url_for('views.users') }}" class="btn btn-lg btn-outline-secondary">Users</a></li>
+      <li><a href="{{ url_for('views.users') }}" class="btn btn-lg btn-outline-secondary">Artists</a></li>
+      <li><a href="{{ url_for('views.users') }}" class="btn btn-lg btn-outline-secondary">Releases</a></li>
+      <li><a href="{{ url_for('views.users') }}" class="btn btn-lg btn-outline-secondary">Tracks</a></li>
+      <li><a href="{{ url_for('views.users') }}" class="btn btn-lg btn-outline-secondary">Ratings</a></li>
+    </ul>
+
+{% endblock %}
