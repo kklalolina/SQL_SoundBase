@@ -14,36 +14,43 @@
       href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
       crossorigin="anonymous"
     />
-    <!--<link rel="stylesheet" href="style.css"/>-->
 
     <title>{% block title %}Home{% endblock %}</title>
   </head>
-  <body>
+  <body style="padding-bottom: auto;
+    background-color:#26282B;color:white;">
 
 <!-----------------------------START OF NAVBAR----------------------------->
-     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <a class="navbar-brand" href="/">Soundbase</a>
-      <button
-        class="navbar-toggler ml-auto"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbar"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="navbar-collapse collapse w-100 order-3 dual-collapse2" id="navbar">
-          <div  class="navbar-nav">
-            <a class="nav-item nav-link" id="home" href="/">Home</a>
-          </div>
-          <div  class="navbar-nav ml-auto">
-              {% if 1==0 %}
-              <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
-              {% else %}
-              <a class="nav-item nav-link" id="login" href="/login">Login</a>
-              <a class="nav-item nav-link" id="signup" href="/signup">Sign Up</a>
-          </div>
+     <nav class="navbar navbar-expand-lg navbar-dark" >
+          <a class="navbar-brand" style="margin-top:2%;margin-left:2%;margin-right:2%;font-size:30px;padding-top:0px;" href="/">SOUNDBASE</a>
+          <!--button pojawia sie gdy mniejsze okno-->
+         <button
+            class="navbar-toggler ml-auto"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbar"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="navbar-collapse collapse w-100 order-3 dual-collapse2" id="navbar"> <!--klasa dla buttonow gdy mniejsze okno-->
+            <div  class="navbar-nav" style="margin-right:2%;font-size:20px;margin-top:2%;">
+                <a class="nav-item nav-link" id="genre" href="/">Genres</a>
+                <a class="nav-item nav-link" id="Recent" href="/">Recent</a>
+                <input id="search-focus" type="search" id="form1" class="form-control" style="background-color:#26282B;color:gray;width:500px;margin-top:5px;margin-left:20px" placeholder="Search" aria-label="Search" aria-describedby="search-addon" />
 
-          {% endif %}
+            </div>
+
+                  {% if g.user %}
+                    <div  class="navbar-nav ml-auto" style="font-size:20px;margin-top:2%;">
+                        <a class="nav-item nav-link" id="profile" href="/">{{ g.user[1]}}</a>
+                      <a class="nav-item nav-link" id="logout" href="/logout" >Logout</a>
+                    </div>
+                      {% else %}
+                    <div  class="navbar-nav ml-auto" style="margin-right:2%;font-size:20px;margin-top:2%;">
+                      <a class="nav-item nav-link" id="login" href="/login" style="padding-right: 30px;"  >Login</a>
+                      <a class="nav-item nav-link" id="signup" href="/signup" >Sign Up</a>
+                    </div>
+                  {% endif %} <!--endif MUSI !>TU<! BYC! NIE ZMIENIAC-->
 
       </div>
     </nav>
@@ -60,9 +67,7 @@
     ></script>
 <!------------------------------END OF NAVBAR------------------------------>
 
-
      <div class="container">{% block content %}  {% endblock %}</div>
-
 
   </body>
 </html>

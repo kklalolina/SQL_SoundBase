@@ -1,3 +1,4 @@
+#-------WSZYSTKO DO PRZEROBIENIA NA BAZE ORACLE--------
 import sqlite3
 
 import click
