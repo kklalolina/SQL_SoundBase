@@ -1,10 +1,10 @@
-{% extends "baseadmin.html" %} {% block title %}Admin panel{% endblock %} {% block content %}
+{% extends "baseadmin.html" %} {% block title %}Artists{% endblock %} {% block content %}
     <div style="padding-top:50px">
         <div style="height=200px;">
-            <h1>User database</h1>
+            <h1>Tracks</h1>
 
             <p>
-                <a href="{{ url_for('views.createUser') }}">Add new user</a>
+                <a href="{{ url_for('views_track.create') }}">Add new track</a>
             </p>
             <form class="form-inline my-2 my-lg-0">
                 <input class="form-control mr-sm-2 bg-dark" type="text" placeholder="Szukaj - nie dziala jeszcze" name="SearchString">
@@ -18,10 +18,8 @@
             <thead class="table-dark">
                 <tr>
                     <th>Id</th>
-                    <th>Username</th>
-                    <th>Add date</th>
-                    <th>Password</th>
-                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Length</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -32,17 +30,11 @@
                 <td>{{ row[0] }}</td>
                 <td>{{ row[1] }}</td>
                 <td>{{ row[2] }}</td>
-                <td>{{ row[3] }}</td>
-                {% if row[4] %}
-                    <td>ADMIN</td>
-                {% else %}
-                    <td>BASIC</td>
-                {% endif %}
 
                 <td>
-                <a href="{{ url_for('views.editUser', id=row[0]) }}" class="btn btn-sm btn-outline-secondary" >Edit</a>
-                <a href="{{ url_for('views.deleteUser', id=row[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a>
-                <a href="{{ url_for('views.detailsUser', id=row[0]) }}" class="btn btn-sm btn-outline-primary">Details</a>
+                <a href="{{ url_for('views_track.edit', id=row[0]) }}" class="btn btn-sm btn-outline-secondary" >Edit</a>
+                <a href="{{ url_for('views_track.delete', id=row[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a>
+                <a href="{{ url_for('views_track.details', id=row[0]) }}" class="btn btn-sm btn-outline-primary">Details</a>
                 </td>
             </tr>
 

@@ -37,6 +37,16 @@ def create_app(test_config=None):
     app.register_blueprint(auth.bp,url_prefix='/')
     from . import views
     app.register_blueprint(views.bp,url_prefix='/')
+    from . import views_artist
+    app.register_blueprint(views_artist.bp, url_prefix='/admin')
+    from . import views_user
+    app.register_blueprint(views_user.bp, url_prefix='/admin')
+    from . import views_track
+    app.register_blueprint(views_track.bp, url_prefix='/admin')
+    from . import views_release #todo +jak?
+    app.register_blueprint(views_release.bp, url_prefix='/admin')
+    from . import views_rating #todo
+    #app.register_blueprint(views_rating.bp, url_prefix='/admin')
 
     return app
 

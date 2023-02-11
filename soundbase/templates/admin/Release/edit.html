@@ -1,5 +1,5 @@
 {% extends "baseadmin.html" %}
-{% block title %}Edit user{% endblock %}
+{% block title %}Edit artist{% endblock %}
 
 {% block content %}
 
@@ -12,26 +12,25 @@
       </button>
     </div>
     {% endfor %}
-    <h1>Edit user</h1>
+    <h1>Edit artist</h1>
 
     <hr />
     <div class="row">
         <div class="col-md-4">
-            <h1>User id: {{ output[0] }}</h1>
-            <h3>User type: {{ output[4] }}</h3>
+            <h1>Artist id: {{ output[0] }}</h1>
             <form method="POST">
                 <div class="text-danger"></div>
                 <div class="form-group">
-                    <label class="control-label ">Username</label>
-                    <input type = "text" class="form-control bg-dark text-white" name="username" value="{{ output[1] }}" />
+                    <label class="control-label ">Name</label>
+                    <input type = "text" class="form-control bg-dark text-white" name="name" value="{{ output[1] }}" />
                 </div>
                 <div class="form-group">
-                    <label class="control-label">Password</label>
-                    <input type="password" name="password" class="form-control bg-dark text-white" value="{{ output[3] }}"/>
+                    <label class="control-label">Activity start date</label>
+                    <input type="date" name="date" class="form-control bg-dark text-white" value="{{ output[2] }}"/>
                 </div>
                 <div class="form-group">
-                    <label class="control-label">Confirm Password</label>
-                    <input type="password" name="cpassword" class="form-control bg-dark text-white" value="{{ output[3] }}" />
+                    <label class="control-label">Description</label>
+                    <textarea type="text" rows="3" name="description" class="form-control bg-dark text-white">{{ output[3] }}</textarea>
                 </div>
                 <div class="form-group">
                     <input type="submit" value="Edit" class="btn btn-dark" />
@@ -41,7 +40,7 @@
     </div>
 
     <div>
-        <a href="{{ url_for('views_user.users') }}">Wróć</a>
+        <a href="{{ url_for('views_artist.artists') }}">Wróć</a>
     </div>
 </div>
 {% endblock %}
