@@ -4,9 +4,29 @@ import cx_Oracle
 
 bp = Blueprint("views_user", __name__)
 
-@bp.route('/users')
+@bp.route('/users', methods=['GET', 'POST'])
 @login_required
 def users():
+    if request.method == 'POST':
+        search = request.form['SearchString']
+        print(search)
+        conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
+        cursor = conn.cursor()
+        searchid=None
+        searchtype=None
+        if search.isdigit():
+            searchid=search
+        if search.capitalize().find('Admin')!=-1:
+            searchtype=1
+        if search.capitalize().find('Basic')!=-1:
+            searchtype=0
+        cursor.execute("SELECT * FROM SOUNDBASE_USERS where user_id = :x or username like :y or user_type like :z",x=searchid,y='%'+search+'%',z=searchtype)
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return render_template("admin/User/list.html", output=rows)
     #TESTOWE POLACZENIE Z BAZA POKI NIEZRIOBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
     cursor = conn.cursor()
@@ -51,7 +71,7 @@ def create():
         else:
             flash(error)
             print(error)
-    return render_template("admin/User/create.html")
+    return render_template("admin/User/createSingle.html")
 
 @bp.route('/edit/<id>', methods=['GET', 'POST'])
 def edit(id):
@@ -125,4 +145,4 @@ def details(id):
 
     cursor.close()
     conn.close()
-    return render_template("admin/User/details.html", output = userdata)
+    return render_template("admin/User/detailsSingle.html", output = userdata)

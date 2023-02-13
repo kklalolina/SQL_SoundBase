@@ -1,0 +1,51 @@
+{% extends "baseadmin.html" %}
+{% block title %}Details{% endblock %}
+
+{% block content %}
+<div style="padding-top:50px;">
+    <h1>Details</h1>
+    <h2>Release id: {{ release[0] }}</h2>
+    <h2>Release type: {{ type }}</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form>
+                <div class="form-group">
+                    <label class="control-label">Release name</label>
+                    <h5>{{ release[1] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Release date</label>
+                    <h5>{{ release[2] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Genre</label>
+                    <h5>{{ genre }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Track id</label>
+                    <h5>{{ track[0] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Track name</label>
+                    <h5>{{ track[1] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Track length</label>
+                    <h5>{{ track[2] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Artists:</label>
+                    {% for i in artists %}
+                    <h5>{{ i }}</h5>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <a href="{{ url_for('views_release.releases') }}">Wróć</a>
+    </div>
+</div>
+{% endblock %}

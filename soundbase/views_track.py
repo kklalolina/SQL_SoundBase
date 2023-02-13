@@ -60,7 +60,7 @@ def create():
             flash('Track added successfully!')
         else:
             flash(error)
-    return render_template("admin/Track/create.html")
+    return render_template("admin/Track/createSingle.html")
 
 @bp.route('/tracks/edit/<id>', methods=['GET', 'POST'])
 @login_required
@@ -164,4 +164,4 @@ def details(id):
 
     cursor.close()
     conn.close()
-    return render_template("admin/Track/details.html", output = userdata)
+    return render_template("admin/Track/detailsSingle.html", output = userdata)

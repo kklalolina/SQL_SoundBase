@@ -18,6 +18,32 @@
                     <h5>{{ output[2] }}</h5>
                 </div>
             </form>
+            <table class="table table-sm table" style="color:white">
+            <thead class="table-dark">
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Length</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+
+          {% for row in output %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+
+                <td>
+                <a href="{{ url_for('views_track.edit', id=row[0]) }}" class="btn btn-sm btn-outline-secondary" >Edit</a>
+                <a href="{{ url_for('views_track.delete', id=row[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a>
+                <a href="{{ url_for('views_track.details', id=row[0]) }}" class="btn btn-sm btn-outline-primary">Details</a>
+                </td>
+            </tr>
+
+            {% endfor %}
+        </table>
         </div>
     </div>
 

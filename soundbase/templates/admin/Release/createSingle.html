@@ -1,4 +1,4 @@
-{% extends "baseadmin.html" %} {% block title %}Add artist{% endblock %} {% block content %}
+{% extends "baseadmin.html" %} {% block title %}Add single{% endblock %} {% block content %}
 <div style="padding-top:50px;">
     {% for message in get_flashed_messages() %}
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -70,7 +70,7 @@
     </div>
 
     <div>
-        <a href="{{ url_for('views_artist.artists') }}">Wróć</a>
+        <a href="{{ url_for('views_release.releases') }}">Wróć</a>
     </div>
 </div>
 {% endblock %}

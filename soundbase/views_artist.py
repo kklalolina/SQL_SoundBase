@@ -4,9 +4,24 @@ import cx_Oracle
 
 bp = Blueprint("views_artist", __name__)
 
-@bp.route('/artists')
+@bp.route('/artists', methods=['GET', 'POST'])
 @login_required
 def artists():
+    if request.method == 'POST':
+        search = request.form['SearchString']
+
+        conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
+        cursor = conn.cursor()
+        searchid=None
+        if search.isdigit():
+            searchid=search
+        cursor.execute("SELECT * FROM ARTIST where artist_id = :x or artist_name like :y",x=searchid,y='%'+search+'%')
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return render_template("admin/Artist/list.html", output=rows)
     #TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
     cursor = conn.cursor()
@@ -53,7 +68,7 @@ def create():
                 flash(error)
         except:
             flash('Date must be in format dd-mm-yyyy')
-    return render_template("admin/Artist/create.html")
+    return render_template("admin/Artist/createSingle.html")
 
 @bp.route('/artists/edit/<id>', methods=['GET', 'POST'])
 @login_required
@@ -137,4 +152,4 @@ def details(id):
 
     cursor.close()
     conn.close()
-    return render_template("admin/Artist/details.html", output = userdata)
+    return render_template("admin/Artist/detailsSingle.html", output = userdata)
