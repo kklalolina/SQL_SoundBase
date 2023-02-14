@@ -27,6 +27,14 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label class="control-label">Tag</label>
+                    <select name="tag" class="custom-select">
+                        {% for tag in tags %}
+                            <option value="{{ tag[0] }}">{{ tag[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="control-label">Release date</label>
                     <input type="date" name="date" class="form-control bg-dark text-white" />
                 </div>

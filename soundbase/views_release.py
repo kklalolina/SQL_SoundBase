@@ -47,6 +47,7 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
         releasedate = request.form['date']
 
         genre = request.form['genre']
+        tag = request.form['tag']
 
         trackname = request.form['trackname']
         hours = str(request.form['hours'])
@@ -71,6 +72,8 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
                 error = "Choose at least one artist!"
             elif not genre:
                 error = "Choose genre!"
+            elif not tag:
+                error = "Choose tag!"
 
             # Formatting the track length to sql interval format
             days = '0'
@@ -85,7 +88,7 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
                 seconds='0'+seconds
             length = days+' '+hours+':'+minutes+':'+seconds
 
-            print(genre)
+
 
             # Connect to the database and add the new Release
             if error is None:
@@ -114,6 +117,8 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
                     conn.commit()
                 cursor.execute("INSERT INTO GENRE_OF_RELEASE (GENRE_ID, RELEASE_ID) VALUES (:genre_id, :release_id)",release_id=release_id, genre_id=genre)
                 conn.commit()
+                cursor.execute("INSERT INTO TAG_OF_RELEASE (TAG_ID, RELEASE_ID) VALUES (:tag_id, :release_id)",release_id=release_id, tag_id=tag)
+                conn.commit()
 
                 conn.commit()
                 cursor.close()
@@ -134,9 +139,12 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
     cursor.execute("SELECT GENRE_ID, GENRE_NAME FROM GENRE")
     genres=cursor.fetchall()
 
+    cursor.execute("SELECT TAG_ID, TAG_NAME FROM DESCRIPTIVE_TAG")
+    tags = cursor.fetchall()
+
     cursor.close()
     conn.close()
-    return render_template("admin/Release/createSingle.html", artists=artists, genres=genres)
+    return render_template("admin/Release/createSingle.html", artists=artists, genres=genres, tags=tags)
 
 
 
@@ -170,12 +178,17 @@ def detailsSingle(id):
     cursor.execute("SELECT GENRE_NAME FROM GENRE WHERE GENRE_ID = :id", id=genre_id)
     genre = cursor.fetchone()[0]
 
+    cursor.execute("SELECT TAG_ID FROM TAG_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
+    tag_id = cursor.fetchone()[0]
+    cursor.execute("SELECT TAG_NAME FROM DESCRIPTIVE_TAG WHERE TAG_ID = :id", id=tag_id)
+    tag = cursor.fetchone()[0]
+
     cursor.execute("SELECT TYPE_NAME FROM RELEASE_TYPE WHERE TYPE_ID = :id", id=release[3])
     type_name = cursor.fetchone()[0]
 
     cursor.close()
     conn.close()
-    return render_template("admin/Release/detailsSingle.html", release = release, genre = genre, artists = artists,track = track,type=type_name)
+    return render_template("admin/Release/detailsSingle.html", release = release, genre = genre, artists = artists,track = track,type=type_name, tag=tag)
 
 
 #------------------------------------------ALBUM---------------------------------------------------
@@ -191,7 +204,7 @@ def createAlbum():
         releasedate = request.form['date']
 
         genre = request.form['genre']
-
+        tag = request.form['tag']
 
         error = None
         from datetime import date, datetime
@@ -209,6 +222,8 @@ def createAlbum():
                 error = "Choose at least one artist!"
             elif not genre:
                 error = "Choose genre!"
+            elif not tag:
+                error = "Choose tag!"
 
             # Connect to the database and add the new Release
             if error is None:
@@ -232,6 +247,8 @@ def createAlbum():
                     conn.commit()
                 cursor.execute("INSERT INTO GENRE_OF_RELEASE (GENRE_ID, RELEASE_ID) VALUES (:genre_id, :release_id)",release_id=release_id, genre_id=genre)
                 conn.commit()
+                cursor.execute("INSERT INTO TAG_OF_RELEASE (TAG_ID, RELEASE_ID) VALUES (:tag_id, :release_id)",release_id=release_id, tag_id=tag)
+                conn.commit()
 
                 conn.commit()
                 cursor.close()
@@ -252,9 +269,12 @@ def createAlbum():
     cursor.execute("SELECT GENRE_ID, GENRE_NAME FROM GENRE")
     genres=cursor.fetchall()
 
+    cursor.execute("SELECT TAG_ID, TAG_NAME FROM DESCRIPTIVE_TAG")
+    tags = cursor.fetchall()
+
     cursor.close()
     conn.close()
-    return render_template("admin/Release/createAlbum.html", artists=artists, genres=genres)
+    return render_template("admin/Release/createAlbum.html", artists=artists, genres=genres,tags=tags)
 
 @bp.route('/releases/<id>/addTrack', methods=['GET', 'POST'])
 @login_required
@@ -293,6 +313,7 @@ def addTrack(id):
 
             cursor.execute("SELECT TRACK_ID FROM TRACK WHERE TRACK_NAME LIKE :x", x=name)
             track_id = cursor.fetchone()[0]
+
             cursor.execute(
                 "INSERT INTO TRACKS_IN_RELEASE (RELEASE_ID, TRACK_ID, TRACK_NO) VALUES (:release_id, :track_id, 1)",
                 release_id=id, track_id=track_id)
@@ -350,12 +371,17 @@ def detailsAlbum(id):
     cursor.execute("SELECT GENRE_NAME FROM GENRE WHERE GENRE_ID = :id", id=genre_id)
     genre = cursor.fetchone()[0]
 
+    cursor.execute("SELECT TAG_ID FROM TAG_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
+    tag_id = cursor.fetchone()[0]
+    cursor.execute("SELECT TAG_NAME FROM DESCRIPTIVE_TAG WHERE TAG_ID = :id", id=tag_id)
+    tag = cursor.fetchone()[0]
+
     cursor.execute("SELECT TYPE_NAME FROM RELEASE_TYPE WHERE TYPE_ID = :id", id=release[3])
     type_name = cursor.fetchone()[0]
 
     cursor.close()
     conn.close()
-    return render_template("admin/Release/detailsAlbum.html", release = release, genre = genre, artists = artists,tracks = tracks,type=type_name)
+    return render_template("admin/Release/detailsAlbum.html", release = release, genre = genre, artists = artists,tracks = tracks,type=type_name,tag=tag)
 @bp.route('/releases/album/<idr>/delete/<id>', methods=['GET', 'POST'])
 @login_required
 def deleteTrack(id,idr):
