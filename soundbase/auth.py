@@ -5,18 +5,17 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-#from soundbase.db import get_db
-
+from soundbase import db
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/signup', methods=('GET', 'POST'))
-def register(): #----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOSC WYPELNIENIA FORMULARZA-----
+def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOSC WYPELNIENIA FORMULARZA-----
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        #db = get_db()
+        # db = get_db()
         error = None
 
         if not username:
@@ -42,13 +41,13 @@ def register(): #----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOSC 
 
 
 @bp.route('/login', methods=('GET', 'POST'))
-def login(): #----NA RAZIE LOGOWANIE NIE UZYWA BAZY DANYCH!! MOZNA SIE ZALOGOWAC JAKO:
+def login():  # ----NA RAZIE LOGOWANIE NIE UZYWA BAZY DANYCH!! MOZNA SIE ZALOGOWAC JAKO:
     # admin haslo:admin, lub zwykly uzytkownik test haslo: test ------------
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         error = None
-        if username == 'admin': #----OD TEGO MOMENTU WSZYSTKO DO PRZEROBIENIA KIEDY JUZ BEDZIE POLACZENIE Z BAZA--
+        if username == 'admin':  # ----OD TEGO MOMENTU WSZYSTKO DO PRZEROBIENIA KIEDY JUZ BEDZIE POLACZENIE Z BAZA--
             user = (0, username, password)
             if password != 'admin':
                 error = 'Incorrect password.'
@@ -111,5 +110,3 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
-
-

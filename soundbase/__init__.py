@@ -1,11 +1,12 @@
 import os
 from flask import Flask
-import cx_Oracle
+from soundbase import db
+
 
 def create_app(test_config=None):
     # creating the application instance and setting default config
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(  #--------DO PRZEROBIENIA NA BAZE ORACLE-----------
+    app.config.from_mapping(  # --------DO PRZEROBIENIA NA BAZE ORACLE-----------
         # SECRET_KEY set to 'dev' for testing purposes
         SECRET_KEY='dev',
         # set path to be relative to the instance directory
@@ -30,23 +31,19 @@ def create_app(test_config=None):
     def hello():
         return 'Hello, World!'
 
-    '''from . import db
-    db.init_app(app)'''
-
     from . import auth
-    app.register_blueprint(auth.bp,url_prefix='/')
+    app.register_blueprint(auth.bp, url_prefix='/')
     from . import views
-    app.register_blueprint(views.bp,url_prefix='/')
+    app.register_blueprint(views.bp, url_prefix='/')
     from . import views_artist
     app.register_blueprint(views_artist.bp, url_prefix='/admin')
     from . import views_user
     app.register_blueprint(views_user.bp, url_prefix='/admin')
     from . import views_track
     app.register_blueprint(views_track.bp, url_prefix='/admin')
-    from . import views_release
+    from . import views_release  # todo +jak?
     app.register_blueprint(views_release.bp, url_prefix='/admin')
-    from . import views_rating
-    app.register_blueprint(views_rating.bp, url_prefix='/admin')
+    #from . import views_rating  # todo
+    # app.register_blueprint(views_rating.bp, url_prefix='/admin')
 
     return app
-

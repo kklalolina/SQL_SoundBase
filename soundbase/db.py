@@ -1,42 +1,102 @@
-#-------WSZYSTKO DO PRZEROBIENIA NA BAZE ORACLE--------
-import sqlite3
-
+import os
 import click
 from flask import current_app, g
+import oracledb
 
 
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(
-            current_app.config['DATABASE'],
-            detect_types=sqlite3.PARSE_DECLTYPES
-        )
-        g.db.row_factory = sqlite3.Row
+class Database:
+    connection = None
 
-    return g.db
+    def __init__(self):
+        # TODO: This probably will not work for you, check your pluggable database name and replace dbpl with it
+        print("Connecting to", "127.0.0.1:1521/dbpl")
+
+        connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1521/dbpl")
+
+    #TODO: NEEDS TO BE TESTED
+    def select_search_artist(self, search):
+        cursor = self.connection.cursor()
+        if search.isDigit():
+            cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_ID = :search OR ARTIST_NAME LIKE %:search%", search)
+        else:
+            cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_NAME LIKE %:search%", search)
+        rows = cursor.fetchall()
+        cursor.close()
+        return rows
+
+    # TODO: NEEDS TO BE TESTED!!
+    def select_search_bar(self, keyword):
+        query_artist = "SELECT * FROM ARTIST WHERE ARTIST_NAME=:keyword"
+        query_release = "SELECT * FROM RELEASE WHERE ARTIST_NAME=:keyword"
+        cursor = self.connection.cursor()
+        rows = cursor.execute(query_artist, keyword)
+        rows += cursor.execute(query_release, keyword)
+        return rows
+
+    # TODO: NEEDS TO BE TESTED!!
+    def select_from_joined_table(self, tables, where_dict = {}):
+        cursor = self.connection.cursor()
+        if len(tables) > 3 or len(tables) < 2:
+            raise Exception("Unsupported number of tables")
+        if len(tables) == 2:
+            query = "SELECT * FROM {0} NATURAL INNER JOIN {1}"
+            arguments = where_dict.values()
+            if not where_dict:
+                cnt = 0
+                query += " WHERE "
+                for key in where_dict:
+                    cnt += 1
+                    query += "{0} = :val{1} AND ".format(key, 1)
+                query = query[:-5] + ";"
+        else:
+            query = "SELECT * FROM {0} INNER NATURAL JOIN ({1} INNER NATURAL JOIN {2})"
+            arguments = where_dict.values()
+            if not where_dict:
+                cnt = 0
+                query += " WHERE "
+                for key in where_dict:
+                    cnt += 1
+                    query += "{0} = :val{1} AND ".format(key, 1)
+                query = query[:-5] + ";"
+        cursor.execute(query, arguments)
+        rows = cursor.fetchall()
+        cursor.close()
+        return rows
 
 
-def close_db(e=None):
-    db = g.pop('db', None)
+    # TODO: NEEDS TO BE TESTED!!!
+    def select_from_table(self, table, where_dict={}):
+        cursor = self.connection.cursor()
+        query = "SELECT * FROM {0}".format(table)
+        arguments = where_dict.values()
 
-    if db is not None:
-        db.close()
+        if not where_dict:
+            cnt = 0
+            query += " WHERE "
+            for key in where_dict:
+                cnt += 1
+                query += "{0} = :val{1} AND ".format(key, 1)
+            query = query[:-5] + ";"
 
+        cursor.execute(query, arguments)
+        rows = cursor.fetchall()
+        cursor.close()
+        return rows
 
-def init_db():
-    db = get_db()
+    def add_artist(self, name, startdate, descr):
+        cursor = self.connection.cursor()
+        cursor.callproc('ADD_ARTIST', [name, startdate, descr])
+        self.connection.commit()
+        cursor.close()
 
-    with current_app.open_resource('schema.sql') as schema:
-        db.executescript(schema.read().decode('utf8'))
+    def edit_artist(self, id, name, startdate, descr):
+        cursor = self.connection.cursor()
+        cursor.callproc('EDIT_ARTIST', [id, name, startdate, descr])
+        self.connection.commit()
+        cursor.close()
 
-
-@click.command('init-db')
-def init_db_command():
-    # initialize (or reinitialize) the database
-    init_db()
-    click.echo('Initialized the database')
-
-
-def init_app(app):
-    app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db_command)
+    def delete_artist(self, id):
+        cursor = self.connection.cursor()
+        cursor.callproc('DELETE_ARTIST', [id])
+        self.connection.commit()
+        cursor.close()
