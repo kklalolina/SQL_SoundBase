@@ -114,8 +114,9 @@ def edit(id):
     cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_ID = :id", id=id)
 
     userdata = list(cursor.fetchone())
+    print(userdata[2])
     userdata[2] = str(userdata[2])[:str(userdata[2]).index(' ')]
-
+    print(userdata[2])
 
     cursor.close()
     conn.close()
@@ -140,7 +141,7 @@ def delete(id):
 
     return render_template("admin/Artist/list.html", output=rows)
 
-@bp.route('/details/<id>', methods=['GET', 'POST'])
+@bp.route('/artists/details/<id>', methods=['GET', 'POST'])
 @login_required
 def details(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
@@ -152,4 +153,4 @@ def details(id):
 
     cursor.close()
     conn.close()
-    return render_template("admin/Artist/detailsSingle.html", output = userdata)
+    return render_template("admin/Artist/details.html", output = userdata)

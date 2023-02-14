@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, flash
 from soundbase.auth import login_required
 import cx_Oracle
 
-#TODO - POLACZYC ARTIST Z TRACK
+
 
 bp = Blueprint("views_track", __name__)
 

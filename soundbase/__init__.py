@@ -43,10 +43,10 @@ def create_app(test_config=None):
     app.register_blueprint(views_user.bp, url_prefix='/admin')
     from . import views_track
     app.register_blueprint(views_track.bp, url_prefix='/admin')
-    from . import views_release #todo +jak?
+    from . import views_release
     app.register_blueprint(views_release.bp, url_prefix='/admin')
-    from . import views_rating #todo
-    #app.register_blueprint(views_rating.bp, url_prefix='/admin')
+    from . import views_rating
+    app.register_blueprint(views_rating.bp, url_prefix='/admin')
 
     return app
 
