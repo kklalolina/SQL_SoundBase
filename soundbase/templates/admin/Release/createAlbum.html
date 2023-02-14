@@ -1,0 +1,55 @@
+{% extends "baseadmin.html" %} {% block title %}Add album{% endblock %} {% block content %}
+<div style="padding-top:50px;">
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endfor %}
+    <h1>Add new album</h1>
+
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form method="POST">
+                <div class="form-group">
+                    <label class="control-label">Name of Album</label>
+                    <input type = "text" class="form-control bg-dark text-white" name="name" />
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Genre</label>
+                    <select name="genre" class="custom-select">
+                        {% for genre in genres %}
+                            <option value="{{ genre[0] }}">{{ genre[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Release date</label>
+                    <input type="date" name="date" class="form-control bg-dark text-white" />
+                </div>
+                <div class="form-group">
+                            <tr>
+                  <td><label>Artists </label>&nbsp;</td>
+                  <td><select class="custom-select" name="artists" size="5" multiple="multiple" tabindex="1">
+                      {% for artist in artists %}
+                            <option value="{{ artist[0] }}">{{ artist[1] }}</option>
+                      {% endfor %}
+                  </select>
+                  </td>
+                </tr>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Add" class="btn btn-dark" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <a href="{{ url_for('views_release.releases') }}">Wróć</a>
+    </div>
+</div>
+{% endblock %}

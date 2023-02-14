@@ -1,0 +1,69 @@
+{% extends "baseadmin.html" %}
+{% block title %}Details{% endblock %}
+
+{% block content %}
+<div style="padding-top:50px;">
+    <h1>Details</h1>
+    <h2>Release id: {{ release[0] }}</h2>
+    <h3>Release type: {{ type }}</h3>
+    <hr />
+    <div class="row">
+        <div class="col-lg-10">
+            <form>
+                <div class="form-group">
+                    <label class="control-label">Release name</label>
+                    <h5>{{ release[1] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Release date</label>
+                    <h5>{{ release[2] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Genre</label>
+                    <h5>{{ genre }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Artists:</label>
+                    {% for i in artists %}
+                    <h5>{{ i }}</h5>
+                    {% endfor %}
+                </div>
+            </form>
+
+
+    <h3>Tracks</h3>
+
+
+        <table class="table table-sm table" style="color:white">
+            <thead class="table-dark">
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Length</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+
+          {% for row in tracks %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+
+                <td>
+
+                <a href="{{ url_for('views_release.deleteTrack', id=row[0], idr=release[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a>
+
+                </td>
+            </tr>
+
+            {% endfor %}
+        </table>
+    </div>
+</div>
+    <div>
+        <a href="{{ url_for('views_release.releases') }}">Wróć</a>
+    </div>
+</div>
+{% endblock %}
