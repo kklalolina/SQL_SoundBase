@@ -1,0 +1,45 @@
+
+{% extends "baseadmin.html" %}
+{% block title %}Details{% endblock %}
+
+{% block content %}
+<div style="padding-top:50px;">
+    <h1>Details</h1>
+    <h2>Rating id: {{ output[0] }}</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form>
+                <div class="form-group">
+                    <label class="control-label">Star value</label>
+                    <h5>{{ output[1] }} stars</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Release</label>
+                    <h5>ID: {{ output[4] }}</h5>
+                    <h5>Name: {{ releasename }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">User</label>
+                    <h5>ID: {{ output[3] }}</h5>
+                    <h5>Name: {{ username }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Date</label>
+                    <h5>{{ output[2] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Content</label>
+                    <h5>{{ output[5] }}</h5>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <a href="{{ url_for('views_release.releases') }}">Wróć</a>
+    </div>
+</div>
+{% endblock %}
+

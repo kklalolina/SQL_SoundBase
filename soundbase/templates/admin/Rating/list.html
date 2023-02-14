@@ -1,0 +1,58 @@
+{% extends "baseadmin.html" %} {% block title %}Ratings{% endblock %} {% block content %}
+    <div style="padding-top:50px">
+        {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endfor %}
+        <div style="height=200px;">
+            <h1>Ratings</h1>
+
+            <p>
+                <a href="{{ url_for('views_rating.create') }}">Add new rating</a>
+            </p>
+            <form class="form-inline my-2 my-lg-0" method="POST">
+                <input class="form-control mr-sm-2 bg-dark text-white" type="text" placeholder="Search" name="SearchString">
+                <button class="btn btn-dark" type="submit">Search</button>
+            </form>
+
+        </div>
+         <div style="padding-top:10px;">
+        <table class="table table-sm table" style="color:white">
+            <thead class="table-dark">
+                <tr>
+                    <th>Id</th>
+                    <th>Star value</th>
+                    <th>Date</th>
+                    <th>User ID</th>
+                    <th>Release ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+
+          {% for row in output %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td>{{ row[4] }}</td>
+
+                <td>
+                <a href="{{ url_for('views_rating.edit', id=row[0]) }}" class="btn btn-sm btn-outline-secondary" >Edit</a>
+                <a href="{{ url_for('views_rating.delete', id=row[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a>
+                <a href="{{ url_for('views_rating.details', id=row[0]) }}" class="btn btn-sm btn-outline-primary">Details</a>
+                </td>
+            </tr>
+
+            {% endfor %}
+        </table>
+         </div>
+    </div>
+
+
+{% endblock %}
