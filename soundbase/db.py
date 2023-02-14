@@ -13,7 +13,17 @@ class Database:
 
         connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1521/dbpl")
 
-    #TODO: NEEDS TO BE TESTED
+    #TODO: NEEDS TO BE TESTED!!
+    def select_average_of_release(self, release):
+        cursor = self.connection.cursor()
+        query = "SELECT AVG(STAR_VALUE) FROM RATING INNER JOIN MUSIC_RELEASE ON RATING.RATED_RELEASE_ID =" \
+                " MUSIC_RELEASE.RELEASE_ID WHERE RELEASE_ID = :release"
+        cursor.execute(query, release)
+        rows = cursor.fetchone()
+        cursor.close()
+
+        return rows
+    #TODO: NEEDS TO BE TESTED!!
     def select_search_artist(self, search):
         cursor = self.connection.cursor()
         if search.isDigit():
@@ -27,7 +37,7 @@ class Database:
     # TODO: NEEDS TO BE TESTED!!
     def select_search_bar(self, keyword):
         query_artist = "SELECT * FROM ARTIST WHERE ARTIST_NAME=:keyword"
-        query_release = "SELECT * FROM RELEASE WHERE ARTIST_NAME=:keyword"
+        query_release = "SELECT * FROM MUSIC_RELEASE WHERE ARTIST_NAME=:keyword"
         cursor = self.connection.cursor()
         rows = cursor.execute(query_artist, keyword)
         rows += cursor.execute(query_release, keyword)
