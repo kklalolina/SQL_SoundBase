@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash
-from soundbase.auth import login_required
+from soundbase.auth import admin_login_required
 import cx_Oracle
 
 
@@ -7,7 +7,7 @@ import cx_Oracle
 bp = Blueprint("views_track", __name__)
 
 @bp.route('/tracks')
-@login_required
+@admin_login_required
 def tracks():
     #TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
@@ -22,7 +22,7 @@ def tracks():
     return render_template("admin/Track/list.html", output=rows)
 
 @bp.route('/tracks/create', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def create():
     if request.method == 'POST':
         # Get the tracks data from the form
@@ -63,7 +63,7 @@ def create():
     return render_template("admin/Track/createSingle.html")
 
 @bp.route('/tracks/edit/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def edit(id):
     if request.method == 'POST':
         # Get the Track data from the form
@@ -134,7 +134,7 @@ def edit(id):
     return render_template("admin/Track/edit.html", output = data)
 
 @bp.route('/tracks/delete/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def delete(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
@@ -153,7 +153,7 @@ def delete(id):
     return render_template("admin/Track/list.html", output=rows)
 
 @bp.route('/tracks/details/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def details(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")

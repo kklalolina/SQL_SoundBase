@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash
-from soundbase.auth import login_required
+from soundbase.auth import admin_login_required
 import cx_Oracle
 
 
@@ -7,7 +7,7 @@ import cx_Oracle
 bp = Blueprint("views_rating", __name__)
 
 @bp.route('/ratings', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def ratings():
     if request.method == 'POST':
         search = request.form['SearchString']
@@ -37,7 +37,7 @@ def ratings():
     return render_template("admin/Rating/list.html", output=rows)
 
 @bp.route('/ratings/create', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def create():
     if request.method == 'POST':
         star = request.form['star']
@@ -91,7 +91,7 @@ def create():
     return render_template("admin/Rating/create.html", users=users, releases=releases)
 
 @bp.route('/ratings/edit/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def edit(id):
     if request.method == 'POST':
         star = request.form['star']
@@ -143,7 +143,7 @@ def edit(id):
     return render_template("admin/Rating/edit.html", output = data, users=users, releases=releases)
 
 @bp.route('/ratings/delete/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def delete(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
@@ -162,7 +162,7 @@ def delete(id):
     return render_template("admin/Rating/list.html", output=rows)
 
 @bp.route('/ratings/details/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def details(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")

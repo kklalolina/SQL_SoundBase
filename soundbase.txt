@@ -331,14 +331,9 @@ CREATE OR REPLACE PROCEDURE EDIT_RATING (
 BEGIN
     UPDATE RATING
     SET STAR_VALUE = p_star_value,
-<<<<<<< Updated upstream
-        SOUNDBASE_USER_ID = p_soundbase_user_id,
-=======
-        RATING_DATE = p_rating_date,
-        SOUNDBASE_USERS_ID = p_soundbase_user_id,
->>>>>>> Stashed changes
-        RATED_RELEASE_ID = p_rated_release_id,
-        CONTENTS = p_contents
+    SOUNDBASE_USER_ID = p_soundbase_user_id,
+    RATED_RELEASE_ID = p_rated_release_id,
+    CONTENTS = p_contents
     WHERE RATING_ID = p_rating_id;
 END EDIT_RATING;
 

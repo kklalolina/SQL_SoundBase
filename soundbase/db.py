@@ -13,7 +13,7 @@ class Database:
 
         connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1521/dbpl")
 
-    #TODO: NEEDS TO BE TESTED!!
+    # TODO: NEEDS TO BE TESTED!!
     def select_average_of_release(self, release):
         cursor = self.connection.cursor()
         query = "SELECT AVG(STAR_VALUE) FROM RATING INNER JOIN MUSIC_RELEASE ON RATING.RATED_RELEASE_ID =" \
@@ -23,7 +23,8 @@ class Database:
         cursor.close()
 
         return rows
-    #TODO: NEEDS TO BE TESTED!!
+
+    # TODO: NEEDS TO BE TESTED!!
     def select_search_artist(self, search):
         cursor = self.connection.cursor()
         if search.isDigit():
@@ -44,7 +45,7 @@ class Database:
         return rows
 
     # TODO: NEEDS TO BE TESTED!!
-    def select_from_joined_table(self, tables, where_dict = {}):
+    def select_from_joined_table(self, tables, where_dict={}):
         cursor = self.connection.cursor()
         if len(tables) > 3 or len(tables) < 2:
             raise Exception("Unsupported number of tables")
@@ -72,7 +73,6 @@ class Database:
         rows = cursor.fetchall()
         cursor.close()
         return rows
-
 
     # TODO: NEEDS TO BE TESTED!!!
     def select_from_table(self, table, where_dict={}):
@@ -108,5 +108,11 @@ class Database:
     def delete_artist(self, id):
         cursor = self.connection.cursor()
         cursor.callproc('DELETE_ARTIST', [id])
+        self.connection.commit()
+        cursor.close()
+
+    def add_users(self, name, password):
+        cursor = self.connection.cursor()
+        cursor.callproc('ADD_USER', [name, password])
         self.connection.commit()
         cursor.close()

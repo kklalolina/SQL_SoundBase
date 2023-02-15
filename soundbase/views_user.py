@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, request, flash
-from soundbase.auth import login_required
+from soundbase.auth import admin_login_required
 import cx_Oracle
 
 bp = Blueprint("views_user", __name__)
 
+# Should these be admin exclusive?
 @bp.route('/users', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def users():
     if request.method == 'POST':
         search = request.form['SearchString']
@@ -40,6 +41,7 @@ def users():
     return render_template("admin/User/list.html", output=rows)
 
 @bp.route('/create', methods=['GET', 'POST'])
+@admin_login_required
 def create():
     if request.method == 'POST':
         # Get the user data from the form
@@ -74,6 +76,7 @@ def create():
     return render_template("admin/User/createSingle.html")
 
 @bp.route('/edit/<id>', methods=['GET', 'POST'])
+@admin_login_required
 def edit(id):
     if request.method == 'POST':
         # Get the user data from the form

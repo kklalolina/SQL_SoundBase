@@ -1,5 +1,6 @@
 import functools
 
+import oracledb
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -7,6 +8,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from soundbase import db
 
+NORMAL_TYPE = 0
+ADMIN_TYPE = 1
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
@@ -15,7 +18,6 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        # db = get_db()
         error = None
 
         if not username:
@@ -23,17 +25,13 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
         elif not password:
             error = "Password is required."
 
-        '''if error is None:
+        if error is None:
             try:
-                db.execute(
-                    "INSERT INTO USERS (username, password) VALUES (?, ?)",
-                    (username, generate_password_hash(password))
-                )
-                db.commit()
-            except db.IntegrityError:
-                error = f"User {username} is already registered. Please select a different username or log in instead."
+                g.db.add_users(username, password)
+            except oracledb.IntegrityError:
+                error = "Username already taken."
             else:
-                return redirect(url_for("auth.login"))'''
+                return redirect(url_for("auth.login"))
 
         flash(error)
 
@@ -47,35 +45,20 @@ def login():  # ----NA RAZIE LOGOWANIE NIE UZYWA BAZY DANYCH!! MOZNA SIE ZALOGOW
         username = request.form['username']
         password = request.form['password']
         error = None
-        if username == 'admin':  # ----OD TEGO MOMENTU WSZYSTKO DO PRZEROBIENIA KIEDY JUZ BEDZIE POLACZENIE Z BAZA--
-            user = (0, username, password)
-            if password != 'admin':
-                error = 'Incorrect password.'
-        elif username != 'test':
-            error = 'Incorrect username.'
-        else:
-            if password != 'test':
-                error = 'Incorrect password.'
-        print(error)
-        user = (1, username, password)
-        print(user)
-        '''db = get_db()
-        error = None
-        user = db.execute(
-            'SELECT * FROM USERS WHERE USERNAME = ?', (username,)
-        ).fetchone()
+        user = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})[0]
 
         if user is None:
             error = "Incorrect username."
-        elif not check_password_hash(user['password'], password):
-            error = 'Incorrect password.' 
-        '''
+        elif not user['PASSWORD'] == password:
+            error = "Incorrect password."
+
         if error is None:
             session.clear()
-            session['user_id'] = user[0]
-            session['username'] = user[1]
-            session['password'] = user[2]
-            if session['username'] == 'admin':
+            session['user_id'] = user['USER_ID']
+            session['username'] = user['USERNAME']
+            session['password'] = user['PASSWORD']
+            session['type'] = user['USER_TYPE']
+            if session['type'] == ADMIN_TYPE:
                 return redirect(url_for('views.admin'))
             else:
                 return redirect(url_for('views.index'))
@@ -92,7 +75,7 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = (user_id, session.get('username'), session.get('password'))
+        g.user = (user_id, session.get('username'), session.get('password'), session.get('type'))
 
 
 @bp.route('/logout')
@@ -106,6 +89,18 @@ def login_required(view):
     def wrapped_view(**kwargs):
         if g.user is None:
             return redirect(url_for('auth.login'))
+
+        return view(**kwargs)
+
+    return wrapped_view
+
+
+def admin_login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user[3] == NORMAL_TYPE:
+            # TODO: View for informing they're lacking certain permissions
+            return redirect(url_for('views.index'))
 
         return view(**kwargs)
 

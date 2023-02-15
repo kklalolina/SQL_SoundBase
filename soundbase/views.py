@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, g
-from soundbase.auth import login_required, db
+from soundbase.auth import login_required, db, admin_login_required
 import oracledb
 
 bp = Blueprint("views", __name__)
@@ -19,6 +19,6 @@ def index():
 
 
 @bp.route('/admin')
-@login_required
+@admin_login_required
 def admin():
     return render_template("admin/index.html")

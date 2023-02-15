@@ -1,13 +1,13 @@
 
 from flask import Blueprint, render_template, request, flash
-from soundbase.auth import login_required
+from soundbase.auth import admin_login_required
 import cx_Oracle
 
 
 bp = Blueprint("views_release", __name__)
 # ---------------------------------------SINGLE------------------------------------------------------
 @bp.route('/releases', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def releases():
     if request.method == 'POST':
         search = request.form['SearchString']
@@ -37,7 +37,7 @@ def releases():
     return render_template("admin/Release/list.html", output=rows)
 
 @bp.route('/releases/createSingle', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artystow -----moze trzeba zmienic nazwe funkcji ale nie mam pomyslu
     if request.method == 'POST':
         # Get the tracks data from the form
@@ -149,7 +149,7 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
 
 
 @bp.route('/releases/details/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def detailsSingle(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
@@ -194,7 +194,7 @@ def detailsSingle(id):
 #------------------------------------------ALBUM---------------------------------------------------
 
 @bp.route('/releases/createAlbum', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def createAlbum():
     if request.method == 'POST':
         # Get the tracks data from the form
@@ -277,7 +277,7 @@ def createAlbum():
     return render_template("admin/Release/createAlbum.html", artists=artists, genres=genres,tags=tags)
 
 @bp.route('/releases/<id>/addTrack', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def addTrack(id):
     if request.method == 'POST':
         # Get the tracks data from the form
@@ -336,7 +336,7 @@ def addTrack(id):
     return render_template("admin/Release/addTrack.html",releasename=releasename)
 
 @bp.route('/releases/album/<id>/details', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def detailsAlbum(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
@@ -383,7 +383,7 @@ def detailsAlbum(id):
     conn.close()
     return render_template("admin/Release/detailsAlbum.html", release = release, genre = genre, artists = artists,tracks = tracks,type=type_name,tag=tag)
 @bp.route('/releases/album/<idr>/delete/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def deleteTrack(id,idr):
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
     cursor = conn.cursor()
@@ -429,7 +429,7 @@ def deleteTrack(id,idr):
 
 #-----------------------delete any release------------
 @bp.route('/releases/delete/<id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def delete(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
