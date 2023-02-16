@@ -160,21 +160,75 @@ CREATE INDEX IDX_ARTIST_NAME ON ARTIST(ARTIST_NAME);
 
 ------------------------------USER ROLE DEFINITIONS---------------------------------------------------------------
 create user normaluser identified by normalpass;
-grant create session to normaluser;
 create user adminuser identified by adminpass;
-grant create session to adminuser;
+
 create user entryuser identified by entrypass;
-grant create session to entryuser;
+
 ------------------------------USER PERMISSION DEFINIITION---------------------------------------------------------
-TODO
+#I HAVE NO IDEA IF THIS EVEN WORKS OR NOT
+grant create session to normaluser;
+grant create session to adminuser;
+grant create session to entryuser;
+create public synonym soundbase_users for soundbase_users;
+create public synonym release_list for release_list;
+create public synonym release_type for release_type;
+create public synonym descriptive_tag for descriptive_tag;
+create public synonym tag_of_list for tag_of_list;
+create public synonym member_of for member_of;
+create public synonym genre for genre;
+create public synonym music_release for music_release;
+create public synonym artist_of_release for artist_of_release;
+create public synonym genre_of_release for genre_of_release;
+create public synonym release_in_list for release_in_list;
+create public synonym tracks_in_release for tracks_in_release;
+create public synonym rating for rating;
+create public synonym tag_of_release for tag_of_release
+create public synonym track for track;
+create public synonym artist for artist;
+grant select on soundbase_users to entryuser, normaluser, adminuser;
+grant select on release_list to entryuser, normaluser, adminuser;
+grant select on release_type to entryuser, normaluser, adminuser;
+grant select on descriptive_tag to entryuser, normaluser, adminuser;
+grant select on tag_of_list to entryuser, normaluser, adminuser;
+grant select on member_of to entryuser, normaluser, adminuser;
+grant select on genre to entryuser, normaluser, adminuser;
+grant select on music_release to entryuser, normaluser, adminuser;
+grant select on artist_of_release to entryuser, normaluser, adminuser;
+grant select on genre_of_release to entryuser, normaluser, adminuser;
+grant select on release_in_list to entryuser, normaluser, adminuser;
+grant select on tracks_in_release to entryuser, normaluser, adminuser;
+grant select on rating to entryuser, normaluser, adminuser;
+grant select on tag_of_release to entryuser, normaluser, adminuser;
+grant select on track to entryuser, normaluser, adminuser;
+grant select on artist to entryuser, normaluser, adminuser;
+grant insert, delete on soundbase_users to adminuser;
+grant insert on soundbase_users to entryuser;
+grant insert, delete on descriptive_tag to adminuser;
+grant insert, delete on release_in_list to adminuser;
+grant insert, delete on rating to adminuser;
+grant insert, delete on track to adminuser;
+grant insert, delete on tracks_in_release to adminuser;
+grant insert, delete on tag_of_release to adminuser;
+grant insert, delete on artist to adminuser;
+grant insert, delete on member_of to adminuser;
+grant insert, delete on genre to adminuser;
+grant insert, delete on release_type to adminuser
+grant insert, delete on genre_of_release to adminuser;
+grant insert, delete on artist_of_release to adminuser;
+grant insert, delete on tag_of_list to normaluser, adminuser;
+grant insert, delete on release_in_list to normaluser, adminuser;
+grant insert, delete on release_list to normaluser, adminuser;
+
 
 
 ------------------------------PROCEDURES FOR SOUNDBASE_USERS------------------------------------------------------
-CREATE OR REPLACE PROCEDURE ADD_USER (p_username VARCHAR2, p_sign_up_date DATE, p_password VARCHAR2, p_type NUMBER)
-AS
+CREATE OR REPLACE PROCEDURE ADD_USER (
+    p_username VARCHAR2,
+    p_password VARCHAR2
+) AS
 BEGIN
-  INSERT INTO SOUNDBASE_USERS (USERNAME, SIGN_UP_DATE, PASSWORD,USER_TYPE)
-  VALUES (p_username, p_sign_up_date, p_password ,p_type);
+    INSERT INTO SOUNDBASE_USERS (USERNAME, SIGN_UP_DATE, PASSWORD, USER_TYPE)
+    VALUES (p_username, CURRENT_DATE, p_password, 0);
 END;
 
 CREATE OR REPLACE PROCEDURE DELETE_USER (p_user_id INTEGER)

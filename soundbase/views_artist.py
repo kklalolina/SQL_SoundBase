@@ -2,23 +2,26 @@ from flask import Blueprint, render_template, request, flash, g
 from soundbase.auth import admin_login_required
 from soundbase import db
 import cx_Oracle
+from soundbase.db import requires_db_connection
 
 bp = Blueprint("views_artist", __name__)
 
 
 @bp.route('/artists', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def artists():
     if request.method == 'POST':
         search = request.form['SearchString']
-        rows = g.db.select_search_artist(search)
+        rows, names = g.db.select_search_artist(search)
         return render_template("admin/Artist/list.html", output=rows)
-    rows = g.db.select_from_table("ARTIST")
+    rows, names = g.db.select_from_table("ARTIST")
     return render_template("admin/Artist/list.html", output=rows)
 
 
 @bp.route('/artists/create', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def create():
     if request.method == 'POST':
         # Get the artist data from the form
@@ -48,6 +51,7 @@ def create():
 
 @bp.route('/artists/edit/<id>', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def edit(id):
     if request.method == 'POST':
         # Get the artist data from the form
@@ -85,16 +89,18 @@ def edit(id):
 
 @bp.route('/artists/delete/<id>', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def delete(id):
     g.db.delete_artist(id)
-    rows = g.db.select_from_table("ARTIST")
+    rows, names = g.db.select_from_table("ARTIST")
 
     return render_template("admin/Artist/list.html", output=rows)
 
 
 @bp.route('/artists/details/<id>', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def details(id):
-    rows = g.db.select_from_table("ARTIST", {"ARTIST_ID": id})
-    userdata = rows[0]
+    rows, names = g.db.select_from_table("ARTIST", {"ARTIST_ID": id})
+    userdata = rows[names["ARTIST_ID"]]
     return render_template("admin/Artist/details.html", output=userdata)

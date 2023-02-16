@@ -1,7 +1,7 @@
 import os
-from flask import Flask
-from soundbase import db
 
+from flask import Flask, g
+from soundbase import db as db_module
 
 def create_app(test_config=None):
     # creating the application instance and setting default config
@@ -21,16 +21,21 @@ def create_app(test_config=None):
         # load from passed config
         app.config.from_mapping(test_config)
 
+    with app.app_context():
+        @app.teardown_request
+        def drop_db_connection(exception):
+            if db_module.has_connection():
+                g.db.close_connection()
+
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
-    # display 'Hello World!' ------DO USUNIECIA
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
+    return app
 
+
+def register_blueprints(app):
     from . import auth
     app.register_blueprint(auth.bp, url_prefix='/')
     from . import views
@@ -41,9 +46,8 @@ def create_app(test_config=None):
     app.register_blueprint(views_user.bp, url_prefix='/admin')
     from . import views_track
     app.register_blueprint(views_track.bp, url_prefix='/admin')
-    from . import views_release  # todo +jak?
+    from . import views_release
     app.register_blueprint(views_release.bp, url_prefix='/admin')
-    #from . import views_rating  # todo
-    # app.register_blueprint(views_rating.bp, url_prefix='/admin')
-
+    from . import views_rating
+    app.register_blueprint(views_rating.bp, url_prefix='/admin')
     return app
