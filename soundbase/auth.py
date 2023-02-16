@@ -1,6 +1,6 @@
 import functools
 
-import oracledb
+import cx_Oracle
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -28,7 +28,7 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
         if error is None:
             try:
                 g.db.add_users(username, password)
-            except oracledb.IntegrityError:
+            except cx_Oracle.IntegrityError:
                 error = "Username already taken."
             else:
                 return redirect(url_for("auth.login"))
@@ -39,12 +39,12 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
 
 
 @bp.route('/login', methods=('GET', 'POST'))
-def login():  # ----NA RAZIE LOGOWANIE NIE UZYWA BAZY DANYCH!! MOZNA SIE ZALOGOWAC JAKO:
-    # admin haslo:admin, lub zwykly uzytkownik test haslo: test ------------
+def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         error = None
+
         user = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})[0]
 
         if user is None:
@@ -98,7 +98,7 @@ def login_required(view):
 def admin_login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        if g.user[3] == NORMAL_TYPE:
+        if g.user is None or g.user[3] == NORMAL_TYPE: # none jest wtedy jak uzytkownik nie jest zalogowany
             # TODO: View for informing they're lacking certain permissions
             return redirect(url_for('views.index'))
 

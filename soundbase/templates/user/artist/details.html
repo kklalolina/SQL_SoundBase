@@ -1,0 +1,56 @@
+{% extends "base.html" %} {% block title %}Artist{% endblock %}
+
+{%block searchbar %}
+<form method="POST">
+                <input id="search-focus" name="SearchString" type="search"  class="form-control" style="background-color:#26282B;color:gray;width:500px;margin-top:5px;margin-left:20px" placeholder="Search releases" aria-label="Search" aria-describedby="search-addon" />
+</form>
+{% endblock %}
+
+{% block content %}
+
+<div style="padding-top:50px;">
+    <h1>Artist: {{ output[1] }}</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form>
+                <div class="form-group">
+                    <label class="control-label">Activity start date</label>
+                    <h5>{{ output[2] }}</h5>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Description</label>
+                    <h5>{{ output[3] }}</h5>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-15">
+            <h3>Releases that appears on</h3>
+
+
+        <table class="table" style="color:white;border-collapse: collapse;border:0">
+
+                <tr>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">#</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Title</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Release date</th>
+
+                </tr>
+
+
+
+          {% for row in releases %}
+           <tr id="row{{row[0]}}" class="clickable" onclick="window.location.href='{{ url_for('views_soundbaseUser.release', id=row[0]) }}';" onmouseout="document.getElementById('row{{row[0]}}').style.backgroundColor ='#26282B'" onmouseover="document.getElementById('row{{row[0]}}').style.backgroundColor ='#222426'" style="cursor: pointer;height:100px;padding: 10px 0;">
+                <td style="border:0;border-bottom: 1px solid #ddd;">{{ row[0] }}</td>
+                <td style="border:0;border-bottom: 1px solid #ddd;">{{ row[1] }}</td>
+                <td style="border:0;border-bottom: 1px solid #ddd;">{{ row[2] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+    </div>
+
+</div>
+
+
+ {% endblock %}

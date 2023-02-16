@@ -1,4 +1,11 @@
-{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}Home{% endblock %}
+{%block searchbar %}
+<form method="POST">
+                <input id="search-focus" name="SearchString" type="search"  class="form-control" style="background-color:#26282B;color:gray;width:500px;margin-top:5px;margin-left:20px" placeholder="Search releases" aria-label="Search" aria-describedby="search-addon" />
+</form>
+{% endblock %}
+{% block content %}
+
 <style>
     .recommend{
     width:70%;
@@ -7,7 +14,16 @@
     color:white;
     margin: 0 auto;
     margin-top:5%;
-}
+    }
+    .genre {
+    color: white;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding-bottom:10px;
+    }
+
 </style>
 
 {% if g.user %}
@@ -17,5 +33,67 @@
 {% else %}
 
 {% endif %}
+
+<div style="padding-top:100px;width=100%;margin-left:-150px">
+    <div class="row">
+    <form method="POST">
+        <div class="col" style="padding-top:50px;">
+            <h3>Filters</h3>
+        <h5>Genres:</h5>
+        <ul style="list-style-type:none;">
+
+                {% for genre in genres %}
+            <li><button class="genre" type="submit" name="SearchGenre" value="{{genre[0]}}">{{ genre[1] }}</button></li>
+            {% endfor %}
+
+        </ul>
+            <h5>Tags:</h5>
+        <ul style="list-style-type:none;">
+
+                {% for tag in tags %}
+            <li><button class="genre" type="submit" name="SearchTag" value="{{tag[0]}}">{{ tag[1] }}</button></li>
+            {% endfor %}
+
+        </ul>
+            </div>
+        </form>
+
+        <div class="col-10">
+        <table class="table" style="color:white;border-collapse: collapse;border:0">
+
+                <tr>
+                    <th style="border:0;border-bottom: 1px solid #ddd;"></th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Title</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Type</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Artists</th>
+
+                </tr>
+
+
+
+          {% for row in output %}
+            <tr id="row{{row[0]}}" class="clickable" onclick="window.location.href='{{ url_for('views_soundbaseUser.release', id=row[0]) }}';" onmouseout="document.getElementById('row{{row[0]}}').style.backgroundColor ='#26282B'" onmouseover="document.getElementById('row{{row[0]}}').style.backgroundColor ='#222426'" style="cursor: pointer;height:100px;padding: 10px 0;">
+                <td style="border:0;"></td>
+                <td style="padding-top:30px;border:0;"><a style="color:white" href="{{ url_for('views_soundbaseUser.release', id=row[0]) }}">{{ row[1] }}</a></td>
+                <td style="padding-top:30px;border:0;">{{ row[3] }}</td>
+                <td style="padding-top:30px;border:0;">
+                    {% for artist in artists %}
+                        {% if artist == row[0] %}
+                            {% for i in artists[artist] %}
+                                {{ i }}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+
+                </td>
+
+            </tr>
+
+
+            {% endfor %}
+        </table>
+         </div>
+    </div>
+</div>
 
 {% endblock %}

@@ -12,9 +12,9 @@ def artists():
     if request.method == 'POST':
         search = request.form['SearchString']
         rows = g.db.select_search_artist(search)
-        return render_template("admin/Artist/list.html", output=rows)
+        return render_template("admin/artist/list.html", output=rows)
     rows = g.db.select_from_table("ARTIST")
-    return render_template("admin/Artist/list.html", output=rows)
+    return render_template("admin/artist/list.html", output=rows)
 
 
 @bp.route('/artists/create', methods=['GET', 'POST'])
@@ -43,7 +43,7 @@ def create():
                 flash(error)
         except:
             flash('Date must be in format dd-mm-yyyy')
-    return render_template("admin/Artist/createSingle.html")
+    return render_template("admin/artist/createSingle.html")
 
 
 @bp.route('/artists/edit/<id>', methods=['GET', 'POST'])
@@ -69,7 +69,7 @@ def edit(id):
             # Edit the artist via procedure
             if error is None:
                 g.db.edit_artist(id, name, startdate, descr)
-                flash('Artist edited successfully!')
+                flash('artist edited successfully!')
             else:
                 flash(error)
         except:
@@ -80,7 +80,7 @@ def edit(id):
     # Get date component of timestamp
     userdata[2] = str(userdata[2])[:str(userdata[2]).index(' ')]
 
-    return render_template("admin/Artist/edit.html", output=userdata)
+    return render_template("admin/artist/edit.html", output=userdata)
 
 
 @bp.route('/artists/delete/<id>', methods=['GET', 'POST'])
@@ -89,7 +89,7 @@ def delete(id):
     g.db.delete_artist(id)
     rows = g.db.select_from_table("ARTIST")
 
-    return render_template("admin/Artist/list.html", output=rows)
+    return render_template("admin/artist/list.html", output=rows)
 
 
 @bp.route('/artists/details/<id>', methods=['GET', 'POST'])
@@ -97,4 +97,4 @@ def delete(id):
 def details(id):
     rows = g.db.select_from_table("ARTIST", {"ARTIST_ID": id})
     userdata = rows[0]
-    return render_template("admin/Artist/details.html", output=userdata)
+    return render_template("admin/artist/details.html", output=userdata)

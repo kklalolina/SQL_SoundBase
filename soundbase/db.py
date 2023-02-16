@@ -1,7 +1,7 @@
 import os
 import click
 from flask import current_app, g
-import oracledb
+import cx_Oracle
 
 
 class Database:
@@ -9,9 +9,9 @@ class Database:
 
     def __init__(self):
         # TODO: This probably will not work for you, check your pluggable database name and replace dbpl with it
-        print("Connecting to", "127.0.0.1:1521/dbpl")
+        print("Connecting to", "127.0.0.1:1522/sound")
 
-        connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1521/dbpl")
+        connection = cx_Oracle.connect("entryuser/entrypass@127.0.0.1:1522/sound")
 
     # TODO: NEEDS TO BE TESTED!!
     def select_average_of_release(self, release):
