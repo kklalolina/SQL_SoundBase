@@ -3,6 +3,7 @@ from soundbase.auth import login_required, db, admin_login_required
 import cx_Oracle
 from soundbase.auth import ADMIN_TYPE, NORMAL_TYPE
 
+
 bp = Blueprint("views", __name__)
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -125,6 +126,7 @@ def index():
 
 @bp.route('/admin')
 @admin_login_required
+@requires_db_connection
 def admin():
     return render_template("admin/index.html")
 

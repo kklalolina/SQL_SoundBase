@@ -1,97 +1,111 @@
-import os
-import click
-from flask import current_app, g
-import cx_Oracle
+import functools
+import oracledb
+from flask import g, current_app as app
+import soundbase.db_constants as db_constants
+
 
 
 class Database:
     connection = None
 
-    def __init__(self):
-        # TODO: This probably will not work for you, check your pluggable database name and replace dbpl with it
-        print("Connecting to", "127.0.0.1:1522/sound")
-
-        connection = cx_Oracle.connect("entryuser/entrypass@127.0.0.1:1522/sound")
-
-    # TODO: NEEDS TO BE TESTED!!
-    def select_average_of_release(self, release):
-        cursor = self.connection.cursor()
-        query = "SELECT AVG(STAR_VALUE) FROM RATING INNER JOIN MUSIC_RELEASE ON RATING.RATED_RELEASE_ID =" \
-                " MUSIC_RELEASE.RELEASE_ID WHERE RELEASE_ID = :release"
-        cursor.execute(query, release)
-        rows = cursor.fetchone()
-        cursor.close()
-
-        return rows
-
-    # TODO: NEEDS TO BE TESTED!!
-    def select_search_artist(self, search):
-        cursor = self.connection.cursor()
-        if search.isDigit():
-            cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_ID = :search OR ARTIST_NAME LIKE %:search%", search)
+    def __init__(self, user_type):
+        print("Connecting to", "127.0.0.1:1521/dbpl...")
+        # This probably will not work for you, check your pluggable database name and replace dbpl with it
+        if user_type == db_constants.ENTRY_TYPE:
+            print("...as entry.")
+            self.connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1521/dbpl")
+        elif user_type == db_constants.NORMAL_TYPE:
+            print("...as normal.")
+            self.connection = oracledb.connect("normaluser/normalpass@127.0.0.1:1521/dbpl")
+        elif user_type == db_constants.ADMIN_TYPE:
+            print("...as admin.")
+            self.connection = oracledb.connect("adminuser/adminpass@127.0.0.1:1521/dbpl")
         else:
-            cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_NAME LIKE %:search%", search)
-        rows = cursor.fetchall()
-        cursor.close()
-        return rows
+            print("Wrong type - Connection failed")
 
-    # TODO: NEEDS TO BE TESTED!!
-    def select_search_bar(self, keyword):
-        query_artist = "SELECT * FROM ARTIST WHERE ARTIST_NAME=:keyword"
-        query_release = "SELECT * FROM MUSIC_RELEASE WHERE ARTIST_NAME=:keyword"
-        cursor = self.connection.cursor()
-        rows = cursor.execute(query_artist, keyword)
-        rows += cursor.execute(query_release, keyword)
-        return rows
+    @staticmethod
+    def get_cursor_dict(cursor):
+        dictionary = {}
+        column = 0
+        for d in cursor.description:
+            dictionary[d[0]] = column
+            column = column + 1
 
-    # TODO: NEEDS TO BE TESTED!!
-    def select_from_joined_table(self, tables, where_dict={}):
+
+        return dictionary
+
+    def select_from_table(self, table, where_list=[], join_list=[], select_list=[]):
         cursor = self.connection.cursor()
-        if len(tables) > 3 or len(tables) < 2:
-            raise Exception("Unsupported number of tables")
-        if len(tables) == 2:
-            query = "SELECT * FROM {0} NATURAL INNER JOIN {1}"
-            arguments = where_dict.values()
-            if not where_dict:
-                cnt = 0
-                query += " WHERE "
-                for key in where_dict:
-                    cnt += 1
-                    query += "{0} = :val{1} AND ".format(key, 1)
-                query = query[:-5] + ";"
+        if type(select_list) is not list:
+            if type(select_list) is str:
+                select_list = [select_list]
+            else:
+                raise Exception("select_list must be a list or a string!")
+        if not select_list:
+            query = "SELECT * "
         else:
-            query = "SELECT * FROM {0} INNER NATURAL JOIN ({1} INNER NATURAL JOIN {2})"
-            arguments = where_dict.values()
-            if not where_dict:
-                cnt = 0
-                query += " WHERE "
-                for key in where_dict:
-                    cnt += 1
-                    query += "{0} = :val{1} AND ".format(key, 1)
-                query = query[:-5] + ";"
-        cursor.execute(query, arguments)
-        rows = cursor.fetchall()
-        cursor.close()
-        return rows
+            query = "SELECT "
+            for entry in select_list:
+                query += "{0}, ".format(entry)
+            query = query[:-2] + " "
+        if type(table) is str:
+            query += "FROM {0}".format(table)
+        else:
+            if len(join_list) != len(table) - 1:
+                raise Exception("join_list dimensions do not match the number of tables!")
+            query += "FROM "
+            for idx, relation in enumerate(table):
+                if idx == 0:
+                    query += "{0} {1} JOIN ".format(relation, join_list[idx][2])
+                else:
+                    query += "{0} ON {1}.{2} = {0}.{3} ".format(relation, table[idx - 1],
+                                                                join_list[idx - 1][0], join_list[idx - 1][1])
+                    if idx + 1 != len(table):
+                        query += "{0} JOIN ".format(join_list[idx][2])
+        arguments = []
 
-    # TODO: NEEDS TO BE TESTED!!!
-    def select_from_table(self, table, where_dict={}):
-        cursor = self.connection.cursor()
-        query = "SELECT * FROM {0}".format(table)
-        arguments = where_dict.values()
-
-        if not where_dict:
-            cnt = 0
-            query += " WHERE "
+        def create_a_conjunction(where_dict):
+            conjunction = ""
             for key in where_dict:
-                cnt += 1
-                query += "{0} = :val{1} AND ".format(key, 1)
-            query = query[:-5] + ";"
+                if key[0] == '%':
+                    conjunction += "{0} LIKE :{0} AND ".format(key[1:])
+                    arguments.append("%{value}%".format(value=where_dict[key]))
+                else:
+                    conjunction += "{0} = :{0} AND ".format(key)
+                    arguments.append(where_dict[key])
+            return conjunction[:-5]
+
+        if where_list:
+            query += " WHERE "
+            if type(where_list) is dict:
+                query += create_a_conjunction(where_list)
+            elif type(where_list) is list:
+                for dictionary in where_list:
+                    new_conjunction = create_a_conjunction(dictionary)
+                    query += new_conjunction + " OR "
+                query = query[:-4]
 
         cursor.execute(query, arguments)
         rows = cursor.fetchall()
+        dictionary = self.get_cursor_dict(cursor)
         cursor.close()
-        return rows
+        return rows, dictionary
+
+    def insert_into_table(self, table, value_dict):
+        cursor = self.connection.cursor()
+        argument_values = list(value_dict.values())
+        query = "INSERT INTO {0} ".format(table)
+        schema = "("
+        arguments = "("
+        for key in value_dict:
+            schema += "{0}, ".format(key)
+            arguments += ":{0}, ".format(key)
+        schema = schema[:-2] + ")"
+        arguments = arguments[:-2] + ")"
+        query += "{0} VALUES {1}".format(schema, arguments)
+        cursor.execute(query, argument_values)
+        self.connection.commit()
+        cursor.close()
 
     def add_artist(self, name, startdate, descr):
         cursor = self.connection.cursor()
@@ -116,3 +130,31 @@ class Database:
         cursor.callproc('ADD_USER', [name, password])
         self.connection.commit()
         cursor.close()
+
+    def call_procedure(self, procedure_name, arguments):
+        cursor = self.connection.cursor()
+        if type(arguments) is not list:
+            cursor.callproc(procedure_name, [arguments])
+        else:
+            cursor.callproc(procedure_name, arguments)
+        self.connection.commit()
+        cursor.close()
+
+    def close_connection(self):
+        self.connection.close()
+
+
+def has_connection():
+    return hasattr(g, "db")
+
+
+def requires_db_connection(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            g.db = Database(-1)
+        else:
+            g.db = Database(g.user[3])
+        return view(**kwargs)
+
+    return wrapped_view

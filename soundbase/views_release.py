@@ -1,44 +1,37 @@
-
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, g
 from soundbase.auth import admin_login_required
-import cx_Oracle
-
+from soundbase.db import requires_db_connection
 
 bp = Blueprint("views_release", __name__)
+
+
 # ---------------------------------------SINGLE------------------------------------------------------
 @bp.route('/releases', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def releases():
     if request.method == 'POST':
         search = request.form['SearchString']
-        conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-        cursor = conn.cursor()
-        searchid=None
+        searchid = None
         if search.isdigit():
-            searchid=search
-        cursor.execute("SELECT RELEASE_ID,RELEASE_NAME,RELEASE_DATE,t.TYPE_NAME FROM MUSIC_RELEASE m JOIN RELEASE_TYPE t ON m.RELEASE_TYPE_ID=t.TYPE_ID WHERE RELEASE_ID = :x OR RELEASE_NAME LIKE :y OR TYPE_NAME LIKE :y",x=searchid,y='%'+search+'%')
-
-        rows = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
+            searchid = search
+        rows, names = g.db.select_from_table(["MUSIC_RELEASE", "RELEASE_TYPE"],
+                                             select_list=["RELEASE_ID", "RELEASE_NAME", "RELEASE_DATE", "TYPE_NAME"],
+                                             join_list=[("RELEASE_TYPE_ID", "TYPE_ID", "INNER")],
+                                             where_list=[{"RELEASE_ID": searchid}, {"%RELEASE_NAME": search},
+                                                         {"%TYPE_NAME": search}])
         return render_template("admin/Release/list.html", output=rows)
-    #TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
-    cursor.execute("SELECT RELEASE_ID,RELEASE_NAME,RELEASE_DATE,t.TYPE_NAME FROM MUSIC_RELEASE m JOIN RELEASE_TYPE t ON m.RELEASE_TYPE_ID=t.TYPE_ID")
 
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
+    rows = g.db.select_from_table(["MUSIC_RELEASE", "RELEASE_TYPE"],
+                                  select_list=["RELEASE_ID", "RELEASE_NAME", "RELEASE_DATE", "TYPE_NAME"],
+                                  join_list=[("RELEASE_TYPE_ID", "TYPE_ID", "INNER")])[0]
     return render_template("admin/Release/list.html", output=rows)
+
 
 @bp.route('/releases/createSingle', methods=['GET', 'POST'])
 @admin_login_required
-def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artystow -----moze trzeba zmienic nazwe funkcji ale nie mam pomyslu
+@requires_db_connection
+def createSingle():  # po prostu wydanie z jedna piosenka - moze byc wiele artystow -----moze trzeba zmienic nazwe funkcji ale nie mam pomyslu
     if request.method == 'POST':
         # Get the tracks data from the form
 
@@ -60,7 +53,7 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
             if releasedate is not None and releasedate != "":
                 releasedate = datetime.strptime(releasedate, '%Y-%m-%d')
         except:
-            error='Date must be in format dd-mm-yyyy'
+            error = 'Date must be in format dd-mm-yyyy'
         if error is None:
             if not name:
                 error = "Single name is required."
@@ -77,124 +70,113 @@ def createSingle(): # po prostu wydanie z jedna piosenka - moze byc wiele artyst
 
             # Formatting the track length to sql interval format
             days = '0'
-            if int(hours)>23:
-                days=str(int(hours)//24)
-                hours=str(int(hours)%24)
+            if int(hours) > 23:
+                days = str(int(hours) // 24)
+                hours = str(int(hours) % 24)
             if int(hours) < 10:
-                hours='0'+hours
+                hours = '0' + hours
             if int(minutes) < 10:
-                minutes='0'+minutes
+                minutes = '0' + minutes
             if int(seconds) < 10:
-                seconds='0'+seconds
-            length = days+' '+hours+':'+minutes+':'+seconds
-
-
+                seconds = '0' + seconds
+            length = days + ' ' + hours + ':' + minutes + ':' + seconds
 
             # Connect to the database and add the new Release
             if error is None:
-                # DO ZMIANY POTEM
-                conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-                cursor = conn.cursor()
-
-                cursor.callproc('ADD_TRACK', [trackname, length])
+                g.db.call_procedure('ADD_TRACK', [trackname, length])
 
                 # ZAPEWNIC ZEBY TYPE ISTNIAL!!!!
-                cursor.execute("SELECT TYPE_ID FROM RELEASE_TYPE WHERE TYPE_NAME LIKE :x",x='Single')
-                type_id = cursor.fetchone()[0]
+                type_id = g.db.select_from_table("RELEASE_TYPE",
+                                                 where_list={"TYPE_NAME": "Single"},
+                                                 select_list="TYPE_ID")[0][0][0]
 
-                cursor.callproc('ADD_MUSIC_RELEASE',[name, releasedate, type_id])
+                g.db.call_procedure('ADD_MUSIC_RELEASE', [name, releasedate, type_id])
 
-                cursor.execute("SELECT RELEASE_ID FROM MUSIC_RELEASE WHERE RELEASE_NAME LIKE :x",x=name)
-                release_id = cursor.fetchone()[0]
-                cursor.execute("SELECT TRACK_ID FROM TRACK WHERE TRACK_NAME LIKE :x",x=trackname)
-                track_id = cursor.fetchone()[0]
-                cursor.execute("INSERT INTO TRACKS_IN_RELEASE (RELEASE_ID, TRACK_ID, TRACK_NO) VALUES (:release_id, :track_id, 1)",release_id=release_id, track_id=track_id)
-                conn.commit()
+                release_id = g.db.select_from_table("MUSIC_RELEASE",
+                                                    where_list={"RELEASE_NAME": name},
+                                                    select_list="RELEASE_ID")[0][0][0]
+                track_id = g.db.select_from_table("TRACK",
+                                                  where_list={"%TRACK_NAME": trackname},
+                                                  select_list="TRACK_ID")[0][0][0]
+                g.db.insert_into_table("TRACKS_IN_RELEASE",
+                                       {"RELEASE_ID": release_id,
+                                        "TRACK_ID": track_id,
+                                        "TRACK_NO": 1})
                 print(artists)
                 for i in artists:
                     print(i)
-                    cursor.execute("INSERT INTO ARTIST_OF_RELEASE (ARTIST_ID, RELEASE_ID) VALUES (:artist_id, :release_id)",release_id=release_id, artist_id=i)
-                    conn.commit()
-                cursor.execute("INSERT INTO GENRE_OF_RELEASE (GENRE_ID, RELEASE_ID) VALUES (:genre_id, :release_id)",release_id=release_id, genre_id=genre)
-                conn.commit()
-                cursor.execute("INSERT INTO TAG_OF_RELEASE (TAG_ID, RELEASE_ID) VALUES (:tag_id, :release_id)",release_id=release_id, tag_id=tag)
-                conn.commit()
-
-                conn.commit()
-                cursor.close()
-                conn.close()
+                    g.db.insert_into_table("ARTIST_OF_RELEASE",
+                                           {"ARTIST_ID": i,
+                                            "RELEASE_ID": release_id})
+                g.db.insert_into_table("GENRE_OF_RELEASE",
+                                       {"GENRE_ID": genre,
+                                        "RELEASE_ID": release_id})
+                g.db.insert_into_table("TAG_OF_RELEASE",
+                                       {"TAG_ID": tag,
+                                        "RELEASE_ID": release_id})
                 flash('Release added successfully!')
             else:
                 flash(error)
         else:
             flash(error)
 
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
+    artists = g.db.select_from_table("ARTIST", select_list=["ARTIST_ID", "ARTIST_NAME"])[0]
+    genres = g.db.select_from_table("GENRE", select_list=["GENRE_ID", "GENRE_NAME"])[0]
+    tags = g.db.select_from_table("DESCRIPTIVE_TAG", select_list=["TAG_ID", "TAG_NAME"])[0]
 
-
-    cursor.execute("SELECT ARTIST_ID, ARTIST_NAME FROM ARTIST")
-    artists = cursor.fetchall()
-
-    cursor.execute("SELECT GENRE_ID, GENRE_NAME FROM GENRE")
-    genres=cursor.fetchall()
-
-    cursor.execute("SELECT TAG_ID, TAG_NAME FROM DESCRIPTIVE_TAG")
-    tags = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
     return render_template("admin/Release/createSingle.html", artists=artists, genres=genres, tags=tags)
-
 
 
 @bp.route('/releases/details/<id>', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def detailsSingle(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM MUSIC_RELEASE WHERE RELEASE_ID = :id", id=id)
-    release = cursor.fetchone()
+    release, release_names = g.db.select_from_table("MUSIC_RELEASE", where_list={"RELEASE_ID": id})
+    release = release[0]
 
-    cursor.execute("SELECT TRACK_ID FROM TRACKS_IN_RELEASE WHERE RELEASE_ID = :id", id=id)
-    track_id = cursor.fetchone()[0]
-    cursor.execute("SELECT * FROM TRACK WHERE TRACK_ID = :id", id=int(track_id))
-    track = cursor.fetchone()
+    track_id = g.db.select_from_table("TRACKS_IN_RELEASE", where_list={"RELEASE_ID": id})[0][0][0]
 
-    cursor.execute("SELECT ARTIST_ID FROM ARTIST_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
-    artists_id = cursor.fetchall()
+    track = g.db.select_from_table("TRACK", where_list={"TRACK_ID": int(track_id)})[0][0]
 
-    artists_id=[x[0] for x in artists_id]
-    artists=[]
+    artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": id})[0]
+
+    artists_id = [x[0] for x in artists_id]
+    artists = []
 
     for i in artists_id:
-        cursor.execute("SELECT ARTIST_NAME FROM ARTIST WHERE ARTIST_ID = :id", id=i)
-        artists.append(cursor.fetchone()[0])
+        artist = g.db.select_from_table("ARTIST", where_list={"ARTIST_ID": i}, select_list="ARTIST_NAME")[0][0][0]
+        artists.append(artist)
 
-    cursor.execute("SELECT GENRE_ID FROM GENRE_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
-    genre_id = cursor.fetchone()[0]
-    cursor.execute("SELECT GENRE_NAME FROM GENRE WHERE GENRE_ID = :id", id=genre_id)
-    genre = cursor.fetchone()[0]
+    genre_id = g.db.select_from_table("GENRE_OF_RELEASE",
+                                      where_list={"RELEASE_ID": id},
+                                      select_list="GENRE_ID")[0][0][0]
+    genre = g.db.select_from_table("GENRE",
+                                   where_list={"GENRE_ID": genre_id},
+                                   select_list="GENRE_NAME")[0][0][0]
 
-    cursor.execute("SELECT TAG_ID FROM TAG_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
-    tag_id = cursor.fetchone()[0]
-    cursor.execute("SELECT TAG_NAME FROM DESCRIPTIVE_TAG WHERE TAG_ID = :id", id=tag_id)
-    tag = cursor.fetchone()[0]
+    tag_id = g.db.select_from_table("TAG_OF_RELEASE",
+                                    where_list={"RELEASE_ID": id},
+                                    select_list="TAG_ID")[0][0][0]
 
-    cursor.execute("SELECT TYPE_NAME FROM RELEASE_TYPE WHERE TYPE_ID = :id", id=release[3])
-    type_name = cursor.fetchone()[0]
+    tag = g.db.select_from_table("DESCRIPTIVE_TAG",
+                                 where_list={"TAG_ID": tag_id},
+                                 select_list="TAG_NAME")[0][0][0]
 
-    cursor.close()
-    conn.close()
-    return render_template("admin/Release/detailsSingle.html", release = release, genre = genre, artists = artists,track = track,type=type_name, tag=tag)
+    type_name = g.db.select_from_table("RELEASE_TYPE",
+                                       where_list={"TYPE_ID": release[release_names["RELEASE_TYPE_ID"]]},
+                                       select_list="TYPE_NAME")[0][0][0]
+
+    return render_template("admin/Release/detailsSingle.html", release=release, genre=genre, artists=artists,
+                           track=track, type=type_name, tag=tag)
 
 
-#------------------------------------------ALBUM---------------------------------------------------
+# ------------------------------------------ALBUM---------------------------------------------------
 
 @bp.route('/releases/createAlbum', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def createAlbum():
     if request.method == 'POST':
         # Get the tracks data from the form
@@ -212,7 +194,7 @@ def createAlbum():
             if releasedate is not None and releasedate != "":
                 releasedate = datetime.strptime(releasedate, '%Y-%m-%d')
         except:
-            error='Date must be in format dd-mm-yyyy'
+            error = 'Date must be in format dd-mm-yyyy'
         if error is None:
             if not name:
                 error = "Single name is required."
@@ -227,57 +209,43 @@ def createAlbum():
 
             # Connect to the database and add the new Release
             if error is None:
-                # DO ZMIANY POTEM
-                conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-                cursor = conn.cursor()
-
-
-
                 # ZAPEWNIC ZEBY TYPE ISTNIAL!!!!
-                cursor.execute("SELECT TYPE_ID FROM RELEASE_TYPE WHERE TYPE_NAME LIKE :x",x='Album')
-                type_id = cursor.fetchone()[0]
+                type_id = g.db.select_from_table("RELEASE_TYPE",
+                                                 where_list={"TYPE_NAME": "Album"},
+                                                 select_list="TYPE_ID")[0][0][0]
 
-                cursor.callproc('ADD_MUSIC_RELEASE',[name, releasedate, type_id])
+                g.db.call_procedure('ADD_MUSIC_RELEASE', [name, releasedate, type_id])
 
-                cursor.execute("SELECT RELEASE_ID FROM MUSIC_RELEASE WHERE RELEASE_NAME LIKE :x",x=name)
-                release_id = cursor.fetchone()[0]
+                release_id = g.db.select_from_table("MUSIC_RELEASE",
+                                                    where_list={"RELEASE_NAME": name},
+                                                    select_list="RELEASE_ID")[0][0][0]
 
                 for i in artists:
-                    cursor.execute("INSERT INTO ARTIST_OF_RELEASE (ARTIST_ID, RELEASE_ID) VALUES (:artist_id, :release_id)",release_id=release_id, artist_id=i)
-                    conn.commit()
-                cursor.execute("INSERT INTO GENRE_OF_RELEASE (GENRE_ID, RELEASE_ID) VALUES (:genre_id, :release_id)",release_id=release_id, genre_id=genre)
-                conn.commit()
-                cursor.execute("INSERT INTO TAG_OF_RELEASE (TAG_ID, RELEASE_ID) VALUES (:tag_id, :release_id)",release_id=release_id, tag_id=tag)
-                conn.commit()
-
-                conn.commit()
-                cursor.close()
-                conn.close()
+                    print(i)
+                    g.db.insert_into_table("ARTIST_OF_RELEASE",
+                                           {"ARTIST_ID": i,
+                                            "RELEASE_ID": release_id})
+                g.db.insert_into_table("GENRE_OF_RELEASE",
+                                       {"GENRE_ID": genre,
+                                        "RELEASE_ID": release_id})
+                g.db.insert_into_table("TAG_OF_RELEASE",
+                                       {"TAG_ID": tag,
+                                        "RELEASE_ID": release_id})
                 flash('Release added successfully!')
             else:
                 flash(error)
         else:
             flash(error)
 
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
+    artists = g.db.select_from_table("ARTIST", select_list=["ARTIST_ID", "ARTIST_NAME"])[0]
+    genres = g.db.select_from_table("GENRE", select_list=["GENRE_ID", "GENRE_NAME"])[0]
+    tags = g.db.select_from_table("DESCRIPTIVE_TAG", select_list=["TAG_ID", "TAG_NAME"])[0]
+    return render_template("admin/Release/createAlbum.html", artists=artists, genres=genres, tags=tags)
 
-
-    cursor.execute("SELECT ARTIST_ID, ARTIST_NAME FROM ARTIST")
-    artists = cursor.fetchall()
-
-    cursor.execute("SELECT GENRE_ID, GENRE_NAME FROM GENRE")
-    genres=cursor.fetchall()
-
-    cursor.execute("SELECT TAG_ID, TAG_NAME FROM DESCRIPTIVE_TAG")
-    tags = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-    return render_template("admin/Release/createAlbum.html", artists=artists, genres=genres,tags=tags)
 
 @bp.route('/releases/<id>/addTrack', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def addTrack(id):
     if request.method == 'POST':
         # Get the tracks data from the form
@@ -287,16 +255,16 @@ def addTrack(id):
         seconds = str(request.form['seconds'])
         # Formatting the track length to sql interval format
         days = '0'
-        if int(hours)>23:
-            days=str(int(hours)//24)
-            hours=str(int(hours)%24)
+        if int(hours) > 23:
+            days = str(int(hours) // 24)
+            hours = str(int(hours) % 24)
         if int(hours) < 10:
-            hours='0'+hours
+            hours = '0' + hours
         if int(minutes) < 10:
-            minutes='0'+minutes
+            minutes = '0' + minutes
         if int(seconds) < 10:
-            seconds='0'+seconds
-        length = days+' '+hours+':'+minutes+':'+seconds
+            seconds = '0' + seconds
+        length = days + ' ' + hours + ':' + minutes + ':' + seconds
 
         error = None
         if not name:
@@ -304,145 +272,138 @@ def addTrack(id):
 
         # Connect to the database and add the new Track
         if error is None:
-            # DO ZMIANY POTEM
-            conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-            cursor = conn.cursor()
+            g.db.call_procedure('ADD_TRACK', [name, length])
 
-            cursor.callproc('ADD_TRACK', [name, length])
-            conn.commit()
-
-            cursor.execute("SELECT TRACK_ID FROM TRACK WHERE TRACK_NAME LIKE :x", x=name)
-            track_id = cursor.fetchone()[0]
-
-            cursor.execute(
-                "INSERT INTO TRACKS_IN_RELEASE (RELEASE_ID, TRACK_ID, TRACK_NO) VALUES (:release_id, :track_id, 1)",
-                release_id=id, track_id=track_id)
-            conn.commit()
-            cursor.close()
-            conn.close()
+            track_id = g.db.select_from_table("TRACK",
+                                              where_list={"%TRACK_NAME": name},
+                                              select_list="TRACK_ID")[0][0][0]
+            g.db.insert_into_table("TRACKS_IN_RELEASE",
+                                   {"RELEASE_ID": id,
+                                    "TRACK_ID": track_id,
+                                    "TRACK_NO": 1})
             flash('Track added successfully!')
         else:
             flash(error)
+    releasename = g.db.select_from_table("MUSIC_RELEASE",
+                                         where_list={"%RELEASE_ID": id},
+                                         select_list="RELEASE_NAME")[0][0][0]
 
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
+    return render_template("admin/Release/addTrack.html", releasename=releasename)
 
-    cursor.execute("SELECT RELEASE_NAME FROM MUSIC_RELEASE WHERE RELEASE_ID LIKE :x", x=id)
-    releasename = cursor.fetchone()[0]
-
-    cursor.close()
-    conn.close()
-
-    return render_template("admin/Release/addTrack.html",releasename=releasename)
 
 @bp.route('/releases/album/<id>/details', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def detailsAlbum(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
+    release, release_names = g.db.select_from_table("MUSIC_RELEASE", where_list={"RELEASE_ID": id})
+    release = release[0]
 
-    cursor.execute("SELECT * FROM MUSIC_RELEASE WHERE RELEASE_ID = :id", id=id)
-    release = cursor.fetchone()
-
-    cursor.execute("SELECT TRACK_ID FROM TRACKS_IN_RELEASE WHERE RELEASE_ID = :id", id=id)
-    tracks_id = cursor.fetchall()
+    tracks_id = g.db.select_from_table("TRACKS_IN_RELEASE",
+                                       where_list={"RELEASE_ID": id},
+                                       select_list="TRACK_ID")[0]
 
     tracks_id = [x[0] for x in tracks_id]
     tracks = []
 
     for i in tracks_id:
-        cursor.execute("SELECT * FROM TRACK WHERE TRACK_ID = :id", id=i)
-        tracks.append(cursor.fetchone())
+        track = g.db.select_from_table("TRACK",
+                                       where_list={"TRACK_ID": i})[0][0]
+        tracks.append(track)
     print(tracks)
 
-    cursor.execute("SELECT ARTIST_ID FROM ARTIST_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
-    artists_id = cursor.fetchall()
-
-    artists_id=[x[0] for x in artists_id]
-    artists=[]
-
-    for i in artists_id:
-        cursor.execute("SELECT ARTIST_NAME FROM ARTIST WHERE ARTIST_ID = :id", id=i)
-        artists.append(cursor.fetchone()[0])
-
-    cursor.execute("SELECT GENRE_ID FROM GENRE_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
-    genre_id = cursor.fetchone()[0]
-    cursor.execute("SELECT GENRE_NAME FROM GENRE WHERE GENRE_ID = :id", id=genre_id)
-    genre = cursor.fetchone()[0]
-
-    cursor.execute("SELECT TAG_ID FROM TAG_OF_RELEASE WHERE RELEASE_ID = :id", id=id)
-    tag_id = cursor.fetchone()[0]
-    cursor.execute("SELECT TAG_NAME FROM DESCRIPTIVE_TAG WHERE TAG_ID = :id", id=tag_id)
-    tag = cursor.fetchone()[0]
-
-    cursor.execute("SELECT TYPE_NAME FROM RELEASE_TYPE WHERE TYPE_ID = :id", id=release[3])
-    type_name = cursor.fetchone()[0]
-
-    cursor.close()
-    conn.close()
-    return render_template("admin/Release/detailsAlbum.html", release = release, genre = genre, artists = artists,tracks = tracks,type=type_name,tag=tag)
-@bp.route('/releases/album/<idr>/delete/<id>', methods=['GET', 'POST'])
-@admin_login_required
-def deleteTrack(id,idr):
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
-
-    cursor.callproc('DELETE_TRACK', [id])
-    conn.commit()
-
-    cursor.execute("SELECT * FROM MUSIC_RELEASE WHERE RELEASE_ID = :id", id=idr)
-    release = cursor.fetchone()
-
-    cursor.execute("SELECT TRACK_ID FROM TRACKS_IN_RELEASE WHERE RELEASE_ID = :id", id=idr)
-    tracks_id = cursor.fetchall()
-
-    tracks_id = [x[0] for x in tracks_id]
-    tracks = []
-
-    for i in tracks_id:
-        cursor.execute("SELECT * FROM TRACK WHERE TRACK_ID = :id", id=i)
-        tracks.append(cursor.fetchone())
-    print(tracks)
-
-    cursor.execute("SELECT ARTIST_ID FROM ARTIST_OF_RELEASE WHERE RELEASE_ID = :id", id=idr)
-    artists_id = cursor.fetchall()
+    artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": id})[0]
 
     artists_id = [x[0] for x in artists_id]
     artists = []
 
     for i in artists_id:
-        cursor.execute("SELECT ARTIST_NAME FROM ARTIST WHERE ARTIST_ID = :id", id=i)
-        artists.append(cursor.fetchone()[0])
+        artist = g.db.select_from_table("ARTIST", where_list={"ARTIST_ID": i}, select_list="ARTIST_NAME")[0][0][0]
+        artists.append(artist)
 
-    cursor.execute("SELECT GENRE_ID FROM GENRE_OF_RELEASE WHERE RELEASE_ID = :id", id=idr)
-    genre_id = cursor.fetchone()[0]
-    cursor.execute("SELECT GENRE_NAME FROM GENRE WHERE GENRE_ID = :id", id=genre_id)
-    genre = cursor.fetchone()[0]
+    genre_id = g.db.select_from_table("GENRE_OF_RELEASE",
+                                      where_list={"RELEASE_ID": id},
+                                      select_list="GENRE_ID")[0][0][0]
+    genre = g.db.select_from_table("GENRE",
+                                   where_list={"GENRE_ID": genre_id},
+                                   select_list="GENRE_NAME")[0][0][0]
 
-    cursor.execute("SELECT TYPE_NAME FROM RELEASE_TYPE WHERE TYPE_ID = :id", id=release[3])
-    type_name = cursor.fetchone()[0]
+    tag_id = g.db.select_from_table("TAG_OF_RELEASE",
+                                    where_list={"RELEASE_ID": id},
+                                    select_list="TAG_ID")[0][0][0]
 
-    cursor.close()
-    conn.close()
-    return render_template("admin/Release/detailsAlbum.html", release=release, genre=genre, artists=artists,tracks=tracks, type=type_name)
+    tag = g.db.select_from_table("DESCRIPTIVE_TAG",
+                                 where_list={"TAG_ID": tag_id},
+                                 select_list="TAG_NAME")[0][0][0]
 
-#-----------------------delete any release------------
+    type_name = g.db.select_from_table("RELEASE_TYPE",
+                                       where_list={"TYPE_ID": release[release_names["RELEASE_TYPE_ID"]]},
+                                       select_list="TYPE_NAME")[0][0][0]
+    return render_template("admin/Release/detailsAlbum.html", release=release, genre=genre, artists=artists,
+                           tracks=tracks, type=type_name, tag=tag)
+
+
+@bp.route('/releases/album/<idr>/delete/<id>', methods=['GET', 'POST'])
+@admin_login_required
+@requires_db_connection
+def deleteTrack(id, idr):
+    g.db.call_procedure('DELETE_TRACK', [id])
+
+    release, release_names = g.db.select_from_table("MUSIC_RELEASE",
+                           where_list={"RELEASE_ID": idr})
+    release = release[0]
+
+    tracks_id = g.db.select_from_table("TRACKS_IN_RELEASE",
+                                       where_list={"RELEASE_ID": id},
+                                       select_list="TRACK_ID")[0]
+
+    tracks_id = [x[0] for x in tracks_id]
+    tracks = []
+
+    for i in tracks_id:
+        track = g.db.select_from_table("TRACK",
+                                       where_list={"TRACK_ID": i})[0][0]
+        tracks.append(track)
+    print(tracks)
+
+    artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": id})[0]
+
+    artists_id = [x[0] for x in artists_id]
+    artists = []
+
+    for i in artists_id:
+        artist = g.db.select_from_table("ARTIST", where_list={"ARTIST_ID": i}, select_list="ARTIST_NAME")[0][0][0]
+        artists.append(artist)
+
+    genre_id = g.db.select_from_table("GENRE_OF_RELEASE",
+                                      where_list={"RELEASE_ID": id},
+                                      select_list="GENRE_ID")[0][0][0]
+    genre = g.db.select_from_table("GENRE",
+                                   where_list={"GENRE_ID": genre_id},
+                                   select_list="GENRE_NAME")[0][0][0]
+
+    tag_id = g.db.select_from_table("TAG_OF_RELEASE",
+                                    where_list={"RELEASE_ID": id},
+                                    select_list="TAG_ID")[0][0][0]
+
+    tag = g.db.select_from_table("DESCRIPTIVE_TAG",
+                                 where_list={"TAG_ID": tag_id},
+                                 select_list="TAG_NAME")[0][0][0]
+
+    type_name = g.db.select_from_table("RELEASE_TYPE",
+                                       where_list={"TYPE_ID": release[release_names["RELEASE_TYPE_ID"]]},
+                                       select_list="TYPE_NAME")[0][0][0]
+    return render_template("admin/Release/detailsAlbum.html", release=release, genre=genre, artists=artists,
+                           tracks=tracks, type=type_name)
+
+
+# -----------------------delete any release------------
 @bp.route('/releases/delete/<id>', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def delete(id):
-    # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
+    g.db.call_procedure("DELETE_MUSIC_RELEASE", [id])
 
-    cursor.callproc('DELETE_MUSIC_RELEASE', [id])
-    conn.commit()
-
-    cursor.execute("SELECT * FROM MUSIC_RELEASE")
-
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
+    rows = g.db.select_from_table('MUSIC_RELEASE')[0]
 
     return render_template("admin/Release/list.html", output=rows)
