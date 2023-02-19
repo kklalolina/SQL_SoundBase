@@ -1,8 +1,7 @@
 import functools
 
-import oracledb
 import soundbase.db_constants as db_constants
-
+import oracledb
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, app
 )
@@ -17,9 +16,11 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
         username = request.form['username']
         password = request.form['password']
         error = None
-
+        # Leave this alone for now
         if not username:
             error = "Username is required."
+        elif any(char.isspace() for char in username):
+            error = "Username cannot contain any whitespaces!"
         elif not password:
             error = "Password is required."
 
@@ -43,12 +44,13 @@ def login():
         username = request.form['username']
         password = request.form['password']
         error = None
-        rows,names = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})
-        user = rows[0]
-        if user is None:
+        rows, names = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})
+        if not rows:
             error = "Incorrect username."
-        elif not user[names['PASSWORD']] == password:
-            error = "Incorrect password."
+        else:
+            user = rows[0]
+            if not user[names['PASSWORD']] == password:
+                error = "Incorrect password."
 
         if error is None:
             session.clear()

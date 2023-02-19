@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, g, session, redirect, url_for
 from soundbase.auth import login_required, admin_login_required
-import cx_Oracle
+import oracledb
 from soundbase.db_constants import ADMIN_TYPE, NORMAL_TYPE
 from soundbase.db import requires_db_connection
 import soundbase.db as db
@@ -11,7 +11,7 @@ bp = Blueprint("views", __name__)
 def index():
     try:
         g.db = db.Database()
-    except cx_Oracle.Error:
+    except oracledb.Error:
         # Error connection to database view
         # TODO: I'm thinking we might need to check the validity of the db connection before every view. Should I write
         # TODO: a decorator for that?
@@ -32,7 +32,7 @@ def index():
                     searchtag = None
 
 
-                conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
+                conn = oracledb.connect("entryuser/entrypass@localhost:1521/dbpl")
                 cursor = conn.cursor()
 
                 if searchgenre:
@@ -86,7 +86,7 @@ def index():
                 conn.close()
                 return render_template("user/index.html", output=rows, artists=artists, genres=genres, tags=tags)
 
-            conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
+            conn = oracledb.connect("entryuser/entrypass@localhost:1521/dbpl")
             cursor = conn.cursor()
 
             cursor.execute(

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, g
 from soundbase.auth import admin_login_required
 from soundbase import db
-import cx_Oracle
+import oracledb
 from soundbase.db import requires_db_connection
 
 bp = Blueprint("views_artist", __name__)

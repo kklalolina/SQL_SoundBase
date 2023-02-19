@@ -23,7 +23,7 @@
                 <div class="form-group">
                     <label class="control-label ">Star value</label>
                     <select name="star"  class="custom-select" style="width:100px;">
-                        {% for n in range(0,6) %}
+                        {% for n in range(1,6) %}
                             {% if n == output[1] %}
                                 <option selected="selected" value="{{ n }}">{{n}} stars</option>
                             {% else %}

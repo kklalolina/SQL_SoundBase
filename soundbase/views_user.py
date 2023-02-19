@@ -1,47 +1,39 @@
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, g
 from soundbase.auth import admin_login_required
-import cx_Oracle
+from oracledb import exceptions
+from soundbase.db import requires_db_connection
 
 bp = Blueprint("views_user", __name__)
 
 # Should these be admin exclusive?
 @bp.route('/users', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def users():
     if request.method == 'POST':
         search = request.form['SearchString']
         print(search)
-        conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-        cursor = conn.cursor()
-        searchid=None
-        searchtype=None
+        searchid = None
+        searchtype = None
         if search.isdigit():
-            searchid=search
-        if search.capitalize().find('Admin')!=-1:
-            searchtype=1
-        if search.capitalize().find('Basic')!=-1:
-            searchtype=0
-        cursor.execute("SELECT * FROM SOUNDBASE_USERS where user_id = :x or username like :y or user_type like :z",x=searchid,y='%'+search+'%',z=searchtype)
-        rows = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
+            searchid = search
+        if search.capitalize().find('Admin') != -1:
+            searchtype = 1
+        if search.capitalize().find('Basic') != -1:
+            searchtype = 0
+        rows = g.db.select_from_table("SOUNDBASE_USERS",
+                                      where_list=[{"USER_ID": searchid},
+                                                  {"%USERNAME": search},
+                                                  {"%USER_TYPE": searchtype}])[0]
 
         return render_template("admin/User/list.html", output=rows)
-    #TESTOWE POLACZENIE Z BAZA POKI NIEZRIOBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM SOUNDBASE_USERS")
-
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
+    rows = g.db.select_from_table("SOUNDBASE_USERS")[0]
 
     return render_template("admin/User/list.html", output=rows)
 
 @bp.route('/create', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def create():
     if request.method == 'POST':
         # Get the user data from the form
@@ -57,26 +49,28 @@ def create():
             error = "Password is required."
         elif len(password)<8 or not any(char.islower() for char in password) or not any(char.isupper() for char in password) or not any(char.isdigit() for char in password):
             error = "Password must contain at least 8 characters, at least one small letter, one big letter and one digit!"
-        elif(password!=cpassword):
+        elif any(char.isspace() for char in username):
+            error = "Username cannot contain any whitespaces!"
+        elif password != cpassword:
             error= "Passwords must match!"
 
         # Connect to the database and add the new user
         if error is None:
             # DO ZMIANY POTEM
-            conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-            cursor = conn.cursor()
-            cursor.callproc('ADD_USER', [username,'01-JAN-21', password, int(usr_type)])
-            conn.commit()
-            cursor.close()
-            conn.close()
-            flash('User added successfully!')
+            try:
+                g.db.call_procedure("ADD_USER", [username, password])
+            except exceptions.IntegrityError:
+                flash("Username already taken!")
+            else:
+                flash('User added successfully!')
         else:
             flash(error)
             print(error)
-    return render_template("admin/User/createSingle.html")
+    return render_template("admin/User/create.html")
 
 @bp.route('/edit/<id>', methods=['GET', 'POST'])
 @admin_login_required
+@requires_db_connection
 def edit(id):
     if request.method == 'POST':
         # Get the user data from the form
@@ -89,63 +83,40 @@ def edit(id):
             error = "Username is required."
         elif not password:
             error = "Password is required."
-        elif len(password)<8 or any(char.islower() for char in password) or not any(char.isupper() for char in password) or not any(char.isdigit() for char in password):
+        elif len(password)<8 or not any(char.islower() for char in password) or not any(char.isupper() for char in password) or not any(char.isdigit() for char in password):
             error = "Password must contain at least 8 characters, at least one small letter, one big letter and one digit!"
+        elif any(char.isspace() for char in username):
+            error = "Username cannot contain any whitespaces!"
         elif password != cpassword:
             error= "Passwords must match!"
+
 
         # Connect to the database and edit the user
         if error is None:
             #DO ZMIANY POTEM
-            conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-            cursor = conn.cursor()
-            cursor.callproc('EDIT_USER', [id, username, password])
-            conn.commit()
-            cursor.close()
-            conn.close()
+            g.db.call_procedure('EDIT_USER', [id, username, password])
             flash('User edited successfully!')
         else:
             flash(error)
-            print(error)
+    userdata = g.db.select_from_table("SOUNDBASE_USERS",
+                           where_list={"USER_ID": id})[0][0]
 
-    # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM SOUNDBASE_USERS WHERE USER_ID = :id", id=id)
-
-    userdata = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
     return render_template("admin/User/edit.html", output = userdata)
 
 @bp.route('/delete/<id>', methods=['GET', 'POST'])
+@admin_login_required
+@requires_db_connection
 def delete(id):
-    # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
+    g.db.call_procedure('DELETE_USER', [id])
 
-    cursor.callproc('DELETE_USER', [id])
-    conn.commit()
-
-    cursor.execute("SELECT * FROM SOUNDBASE_USERS")
-
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
+    rows = g.db.select_from_table("SOUNDBASE_USERS")[0]
 
     return render_template("admin/User/list.html", output=rows)
 
 @bp.route('/details/<id>', methods=['GET', 'POST'])
+@admin_login_required
+@requires_db_connection
 def details(id):
-    # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
-    conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM SOUNDBASE_USERS WHERE USER_ID = :id", id=id)
-
-    userdata = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-    return render_template("admin/User/detailsSingle.html", output = userdata)
+    userdata = g.db.select_from_table("SOUNDBASE_USERS",
+                                      where_list={"USER_ID": id})[0][0]
+    return render_template("admin/User/details.html", output=userdata)

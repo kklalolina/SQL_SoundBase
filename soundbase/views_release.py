@@ -1,3 +1,4 @@
+import oracledb
 from flask import Blueprint, render_template, request, flash, g
 from soundbase.auth import admin_login_required
 from soundbase.db import requires_db_connection
@@ -83,38 +84,31 @@ def createSingle():  # po prostu wydanie z jedna piosenka - moze byc wiele artys
 
             # Connect to the database and add the new Release
             if error is None:
-                g.db.call_procedure('ADD_TRACK', [trackname, length])
-
-                # ZAPEWNIC ZEBY TYPE ISTNIAL!!!!
                 type_id = g.db.select_from_table("RELEASE_TYPE",
                                                  where_list={"TYPE_NAME": "Single"},
                                                  select_list="TYPE_ID")[0][0][0]
-
-                g.db.call_procedure('ADD_MUSIC_RELEASE', [name, releasedate, type_id])
-
-                release_id = g.db.select_from_table("MUSIC_RELEASE",
-                                                    where_list={"RELEASE_NAME": name},
-                                                    select_list="RELEASE_ID")[0][0][0]
-                track_id = g.db.select_from_table("TRACK",
-                                                  where_list={"%TRACK_NAME": trackname},
-                                                  select_list="TRACK_ID")[0][0][0]
-                g.db.insert_into_table("TRACKS_IN_RELEASE",
-                                       {"RELEASE_ID": release_id,
-                                        "TRACK_ID": track_id,
-                                        "TRACK_NO": 1})
-                print(artists)
-                for i in artists:
-                    print(i)
-                    g.db.insert_into_table("ARTIST_OF_RELEASE",
-                                           {"ARTIST_ID": i,
+                try:
+                    g.db.call_procedure('ADD_MUSIC_RELEASE', [name, releasedate, type_id])
+                except oracledb.IntegrityError:
+                    flash("Integrity Error - Release name must be unique!")
+                else:
+                    release_id = g.db.select_from_table("MUSIC_RELEASE",
+                                                        where_list={"RELEASE_NAME": name},
+                                                        select_list="RELEASE_ID")[0][0][0]
+                    g.db.call_procedure("ADD_TRACK", [trackname, length, release_id])
+                    print(artists)
+                    for i in artists:
+                        print(i)
+                        g.db.insert_into_table("ARTIST_OF_RELEASE",
+                                               {"ARTIST_ID": i,
+                                                "RELEASE_ID": release_id})
+                    g.db.insert_into_table("GENRE_OF_RELEASE",
+                                           {"GENRE_ID": genre,
                                             "RELEASE_ID": release_id})
-                g.db.insert_into_table("GENRE_OF_RELEASE",
-                                       {"GENRE_ID": genre,
-                                        "RELEASE_ID": release_id})
-                g.db.insert_into_table("TAG_OF_RELEASE",
-                                       {"TAG_ID": tag,
-                                        "RELEASE_ID": release_id})
-                flash('Release added successfully!')
+                    g.db.insert_into_table("TAG_OF_RELEASE",
+                                           {"TAG_ID": tag,
+                                            "RELEASE_ID": release_id})
+                    flash('Release added successfully!')
             else:
                 flash(error)
         else:
@@ -136,9 +130,9 @@ def detailsSingle(id):
     release, release_names = g.db.select_from_table("MUSIC_RELEASE", where_list={"RELEASE_ID": id})
     release = release[0]
 
-    track_id = g.db.select_from_table("TRACKS_IN_RELEASE", where_list={"RELEASE_ID": id})[0][0][0]
+    track_id = g.db.select_from_table("TRACKS_IN_RELEASE", where_list={"RELEASE_ID": id})[0][0][1]
 
-    track = g.db.select_from_table("TRACK", where_list={"TRACK_ID": int(track_id)})[0][0]
+    track = g.db.select_from_table("TRACK", where_list={"TRACK_ID": track_id})[0][0]
 
     artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": id})[0]
 
@@ -214,24 +208,27 @@ def createAlbum():
                                                  where_list={"TYPE_NAME": "Album"},
                                                  select_list="TYPE_ID")[0][0][0]
 
-                g.db.call_procedure('ADD_MUSIC_RELEASE', [name, releasedate, type_id])
+                try:
+                    g.db.call_procedure('ADD_MUSIC_RELEASE', [name, releasedate, type_id])
+                except oracledb.IntegrityError:
+                    flash("Integrity Error - Release name must be unique!")
+                else:
+                    release_id = g.db.select_from_table("MUSIC_RELEASE",
+                                                        where_list={"RELEASE_NAME": name},
+                                                        select_list="RELEASE_ID")[0][0][0]
 
-                release_id = g.db.select_from_table("MUSIC_RELEASE",
-                                                    where_list={"RELEASE_NAME": name},
-                                                    select_list="RELEASE_ID")[0][0][0]
-
-                for i in artists:
-                    print(i)
-                    g.db.insert_into_table("ARTIST_OF_RELEASE",
-                                           {"ARTIST_ID": i,
+                    for i in artists:
+                        print(i)
+                        g.db.insert_into_table("ARTIST_OF_RELEASE",
+                                               {"ARTIST_ID": i,
+                                                "RELEASE_ID": release_id})
+                    g.db.insert_into_table("GENRE_OF_RELEASE",
+                                           {"GENRE_ID": genre,
                                             "RELEASE_ID": release_id})
-                g.db.insert_into_table("GENRE_OF_RELEASE",
-                                       {"GENRE_ID": genre,
-                                        "RELEASE_ID": release_id})
-                g.db.insert_into_table("TAG_OF_RELEASE",
-                                       {"TAG_ID": tag,
-                                        "RELEASE_ID": release_id})
-                flash('Release added successfully!')
+                    g.db.insert_into_table("TAG_OF_RELEASE",
+                                           {"TAG_ID": tag,
+                                            "RELEASE_ID": release_id})
+                    flash('Release added successfully!')
             else:
                 flash(error)
         else:
@@ -272,16 +269,16 @@ def addTrack(id):
 
         # Connect to the database and add the new Track
         if error is None:
-            g.db.call_procedure('ADD_TRACK', [name, length])
-
-            track_id = g.db.select_from_table("TRACK",
-                                              where_list={"%TRACK_NAME": name},
-                                              select_list="TRACK_ID")[0][0][0]
-            g.db.insert_into_table("TRACKS_IN_RELEASE",
-                                   {"RELEASE_ID": id,
-                                    "TRACK_ID": track_id,
-                                    "TRACK_NO": 1})
-            flash('Track added successfully!')
+            try:
+                g.db.call_procedure('ADD_TRACK', [name, length, id])
+            except oracledb.Error as ex:
+                if ex.args[0].code == 20000:
+                    flash("Too many tracks in album!")
+                else:
+                    flash(type(ex).__name__ + " has occurred! Details: ")
+                    flash(ex)
+            else:
+                flash('Track added successfully!')
         else:
             flash(error)
     releasename = g.db.select_from_table("MUSIC_RELEASE",
@@ -354,7 +351,7 @@ def deleteTrack(id, idr):
     release = release[0]
 
     tracks_id = g.db.select_from_table("TRACKS_IN_RELEASE",
-                                       where_list={"RELEASE_ID": id},
+                                       where_list={"RELEASE_ID": idr},
                                        select_list="TRACK_ID")[0]
 
     tracks_id = [x[0] for x in tracks_id]
@@ -366,7 +363,7 @@ def deleteTrack(id, idr):
         tracks.append(track)
     print(tracks)
 
-    artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": id})[0]
+    artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": idr})[0]
 
     artists_id = [x[0] for x in artists_id]
     artists = []
@@ -376,14 +373,14 @@ def deleteTrack(id, idr):
         artists.append(artist)
 
     genre_id = g.db.select_from_table("GENRE_OF_RELEASE",
-                                      where_list={"RELEASE_ID": id},
+                                      where_list={"RELEASE_ID": idr},
                                       select_list="GENRE_ID")[0][0][0]
     genre = g.db.select_from_table("GENRE",
                                    where_list={"GENRE_ID": genre_id},
                                    select_list="GENRE_NAME")[0][0][0]
 
     tag_id = g.db.select_from_table("TAG_OF_RELEASE",
-                                    where_list={"RELEASE_ID": id},
+                                    where_list={"RELEASE_ID": idr},
                                     select_list="TAG_ID")[0][0][0]
 
     tag = g.db.select_from_table("DESCRIPTIVE_TAG",
