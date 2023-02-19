@@ -13,9 +13,15 @@ bp = Blueprint("views_artist", __name__)
 def artists():
     if request.method == 'POST':
         search = request.form['SearchString']
-        rows, names = g.db.select_search_artist(search)
+        if search.isDigit():
+           rows = g.db.select_from_table("ARTIST",
+                                         where_list=[{"ARTIST_ID":search},
+                                                     {"%ARTIST_NAME":search})
+        else:
+           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})
+           
         return render_template("admin/Artist/list.html", output=rows)
-    rows, names = g.db.select_from_table("ARTIST")
+    rows = g.db.select_from_table("ARTIST")[0]
     return render_template("admin/Artist/list.html", output=rows)
 
 
@@ -84,7 +90,7 @@ def edit(id):
     # Get date component of timestamp
     userdata[2] = str(userdata[names["ACTIVITY_START_DATE"]])[:str(userdata[names["ACTIVITY_START_DATE"]]).index(' ')]
 
-    return render_template("admin/Artist/edit.html", output=userdata)
+    return render_template("admin/artist/edit.html", output=userdata)
 
 
 @bp.route('/artists/delete/<id>', methods=['GET', 'POST'])
@@ -94,7 +100,7 @@ def delete(id):
     g.db.call_procedure("DELETE_ARTIST", id)
     rows, names = g.db.select_from_table("ARTIST")
 
-    return render_template("admin/Artist/list.html", output=rows)
+    return render_template("admin/artist/list.html", output=rows)
 
 
 @bp.route('/artists/details/<id>', methods=['GET', 'POST'])

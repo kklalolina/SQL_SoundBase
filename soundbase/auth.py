@@ -2,6 +2,7 @@ import functools
 
 import oracledb
 import soundbase.db_constants as db_constants
+
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, app
 )
@@ -42,8 +43,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         error = None
-        rows, names = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})
-        user = rows[0]
+        user = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})[0]
 
         if user is None:
             error = "Incorrect username."

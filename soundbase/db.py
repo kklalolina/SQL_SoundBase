@@ -4,6 +4,7 @@ from flask import g, current_app as app
 import soundbase.db_constants as db_constants
 
 
+
 class Database:
     connection = None
 
@@ -29,6 +30,7 @@ class Database:
         for d in cursor.description:
             dictionary[d[0]] = column
             column = column + 1
+
 
         return dictionary
 

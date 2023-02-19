@@ -1,5 +1,4 @@
 from soundbase import create_app, register_blueprints
-from flask import g
 
 app = create_app()
 
