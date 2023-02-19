@@ -24,7 +24,7 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
 
         if error is None:
             try:
-                g.db.add_users(username, password)
+                g.db.call_proc("ADD_USER", [username, password])
             except oracledb.IntegrityError:
                 error = "Username already taken."
             else:
@@ -37,8 +37,7 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
 
 @bp.route('/login', methods=('GET', 'POST'))
 @requires_db_connection
-def login():  # ----NA RAZIE LOGOWANIE NIE UZYWA BAZY DANYCH!! MOZNA SIE ZALOGOWAC JAKO:
-    # admin haslo:admin, lub zwykly uzytkownik test haslo: test ------------
+def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']

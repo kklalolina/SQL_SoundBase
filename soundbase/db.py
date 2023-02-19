@@ -32,90 +32,78 @@ class Database:
 
         return dictionary
 
-    # TODO: NEEDS TO BE TESTED!!
-    def select_average_of_release(self, release):
+    def select_from_table(self, table, where_list=[], join_list=[], select_list=[]):
         cursor = self.connection.cursor()
-        query = "SELECT AVG(STAR_VALUE) FROM RATING INNER JOIN MUSIC_RELEASE ON RATING.RATED_RELEASE_ID =" \
-                " MUSIC_RELEASE.RELEASE_ID WHERE RELEASE_ID = :release"
-        cursor.execute(query, release)
-        rows = cursor.fetchone()
-        dictionary = self.get_cursor_dict(cursor)
-        cursor.close()
-        return rows, dictionary
-
-    # TODO: NEEDS TO BE TESTED!!
-    def select_search_artist(self, search):
-        cursor = self.connection.cursor()
-        if search.isDigit():
-            cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_ID = :search OR ARTIST_NAME LIKE %:search%", search)
+        if type(select_list) is not list:
+            if type(select_list) is str:
+                select_list = [select_list]
+            else:
+                raise Exception("select_list must be a list or a string!")
+        if not select_list:
+            query = "SELECT * "
         else:
-            cursor.execute("SELECT * FROM ARTIST WHERE ARTIST_NAME LIKE %:search%", search)
-        rows = cursor.fetchall()
-        dictionary = self.get_cursor_dict(cursor)
-        cursor.close()
-        return rows, dictionary
-
-    # TODO: NEEDS TO BE TESTED!!
-    def select_search_bar(self, keyword):
-        query_artist = "SELECT * FROM ARTIST WHERE ARTIST_NAME=:keyword"
-        query_release = "SELECT * FROM MUSIC_RELEASE WHERE ARTIST_NAME=:keyword"
-        cursor = self.connection.cursor()
-        rows = cursor.execute(query_artist, keyword)
-        rows += cursor.execute(query_release, keyword)
-        dictionary = self.get_cursor_dict(cursor)
-        cursor.close()
-        return rows, dictionary
-
-    # TODO: NEEDS TO BE TESTED!!
-    def select_from_joined_table(self, tables, where_dict={}):
-        cursor = self.connection.cursor()
-        if len(tables) > 3 or len(tables) < 2:
-            raise Exception("Unsupported number of tables")
-        if len(tables) == 2:
-            query = "SELECT * FROM {0} NATURAL INNER JOIN {1}"
-            arguments = where_dict.values()
-            if not where_dict:
-                cnt = 0
-                query += " WHERE "
-                for key in where_dict:
-                    cnt += 1
-                    query += "{0} = :val{1} AND ".format(key, 1)
-                query = query[:-5] + ";"
+            query = "SELECT "
+            for entry in select_list:
+                query += "{0}, ".format(entry)
+            query = query[:-2] + " "
+        if type(table) is str:
+            query += "FROM {0}".format(table)
         else:
-            query = "SELECT * FROM {0} INNER NATURAL JOIN ({1} INNER NATURAL JOIN {2})"
-            arguments = where_dict.values()
-            if not where_dict:
-                cnt = 0
-                query += " WHERE "
-                for key in where_dict:
-                    cnt += 1
-                    query += "{0} = :val{1} AND ".format(key, 1)
-                query = query[:-5] + ";"
-        cursor.execute(query, arguments)
-        rows = cursor.fetchall()
-        dictionary = self.get_cursor_dict(cursor)
-        cursor.close()
-        return rows, dictionary
+            if len(join_list) != len(table) - 1:
+                raise Exception("join_list dimensions do not match the number of tables!")
+            query += "FROM "
+            for idx, relation in enumerate(table):
+                if idx == 0:
+                    query += "{0} {1} JOIN ".format(relation, join_list[idx][2])
+                else:
+                    query += "{0} ON {1}.{2} = {0}.{3} ".format(relation, table[idx - 1],
+                                                                join_list[idx - 1][0], join_list[idx - 1][1])
+                    if idx + 1 != len(table):
+                        query += "{0} JOIN ".format(join_list[idx][2])
+        arguments = []
 
-    # TODO: NEEDS TO BE TESTED!!!
-    def select_from_table(self, table, where_dict={}):
-        cursor = self.connection.cursor()
-        query = "SELECT * FROM {0}".format(table)
-        arguments = list(where_dict.values())
-
-        if where_dict:
-            cnt = 0
-            query += " WHERE "
+        def create_a_conjunction(where_dict):
+            conjunction = ""
             for key in where_dict:
-                cnt += 1
-                query += "{0} = :val{1} AND ".format(key, 1)
-            query = query[:-5]
+                if key[0] == '%':
+                    conjunction += "{0} LIKE :{0} AND ".format(key[1:])
+                    arguments.append("%{value}%".format(value=where_dict[key]))
+                else:
+                    conjunction += "{0} = :{0} AND ".format(key)
+                    arguments.append(where_dict[key])
+            return conjunction[:-5]
+
+        if where_list:
+            query += " WHERE "
+            if type(where_list) is dict:
+                query += create_a_conjunction(where_list)
+            elif type(where_list) is list:
+                for dictionary in where_list:
+                    new_conjunction = create_a_conjunction(dictionary)
+                    query += new_conjunction + " OR "
+                query = query[:-4]
 
         cursor.execute(query, arguments)
         rows = cursor.fetchall()
         dictionary = self.get_cursor_dict(cursor)
         cursor.close()
         return rows, dictionary
+
+    def insert_into_table(self, table, value_dict):
+        cursor = self.connection.cursor()
+        argument_values = list(value_dict.values())
+        query = "INSERT INTO {0} ".format(table)
+        schema = "("
+        arguments = "("
+        for key in value_dict:
+            schema += "{0}, ".format(key)
+            arguments += ":{0}, ".format(key)
+        schema = schema[:-2] + ")"
+        arguments = arguments[:-2] + ")"
+        query += "{0} VALUES {1}".format(schema, arguments)
+        cursor.execute(query, argument_values)
+        self.connection.commit()
+        cursor.close()
 
     def add_artist(self, name, startdate, descr):
         cursor = self.connection.cursor()
@@ -138,6 +126,15 @@ class Database:
     def add_users(self, name, password):
         cursor = self.connection.cursor()
         cursor.callproc('ADD_USER', [name, password])
+        self.connection.commit()
+        cursor.close()
+
+    def call_procedure(self, procedure_name, arguments):
+        cursor = self.connection.cursor()
+        if type(arguments) is not list:
+            cursor.callproc(procedure_name, [arguments])
+        else:
+            cursor.callproc(procedure_name, arguments)
         self.connection.commit()
         cursor.close()
 

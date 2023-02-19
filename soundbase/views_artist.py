@@ -41,12 +41,12 @@ def create():
 
             # Connect to the database and add the new artist
             if error is None:
-                g.db.add_artist(name, startdate, descr)
+                g.db.call_procedure("ADD_ARTIST", [name, startdate, descr])
             else:
                 flash(error)
-        except:
-            flash('Date must be in format dd-mm-yyyy')
-    return render_template("admin/Artist/createSingle.html")
+        except Exception as ex:
+            flash("{0} has occured!".format(type(ex).__name__))
+    return render_template("admin/Artist/create.html")
 
 
 @bp.route('/artists/edit/<id>', methods=['GET', 'POST'])
@@ -72,17 +72,17 @@ def edit(id):
 
             # Edit the artist via procedure
             if error is None:
-                g.db.edit_artist(id, name, startdate, descr)
+                g.db.call_procedure("EDIT_ARTIST", [id, name, startdate, descr])
                 flash('Artist edited successfully!')
             else:
                 flash(error)
         except:
             flash('Date must be in format dd-mm-yyyy')
 
-    rows = g.db.select_from_table("ARTIST", {"ARTIST_ID": id})
-    userdata = rows[0]
+    rows, names = g.db.select_from_table("ARTIST", {"ARTIST_ID": id})
+    userdata = list(rows[0])
     # Get date component of timestamp
-    userdata[2] = str(userdata[2])[:str(userdata[2]).index(' ')]
+    userdata[2] = str(userdata[names["ACTIVITY_START_DATE"]])[:str(userdata[names["ACTIVITY_START_DATE"]]).index(' ')]
 
     return render_template("admin/Artist/edit.html", output=userdata)
 
@@ -91,7 +91,7 @@ def edit(id):
 @admin_login_required
 @requires_db_connection
 def delete(id):
-    g.db.delete_artist(id)
+    g.db.call_procedure("DELETE_ARTIST", id)
     rows, names = g.db.select_from_table("ARTIST")
 
     return render_template("admin/Artist/list.html", output=rows)

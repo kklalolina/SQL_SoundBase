@@ -131,7 +131,7 @@ CREATE TABLE RATING (
     RATED_RELEASE_ID INTEGER NOT NULL,
     CONTENTS VARCHAR2(4000),
     CONSTRAINT RATING_ID PRIMARY KEY(RATING_ID),
-    CONSTRAINT RATING_FK FOREIGN KEY(SOUNDBASE_USER_ID)
+    CONSTRAINT RATING_FK FOREIGN KEY(SOUNDBASE_USERS_ID)
     REFERENCES SOUNDBASE_USERS(USER_ID) 
 )
  
@@ -182,7 +182,7 @@ create public synonym genre_of_release for genre_of_release;
 create public synonym release_in_list for release_in_list;
 create public synonym tracks_in_release for tracks_in_release;
 create public synonym rating for rating;
-create public synonym tag_of_release for tag_of_release
+create public synonym tag_of_release for tag_of_release;
 create public synonym track for track;
 create public synonym artist for artist;
 grant select on soundbase_users to entryuser, normaluser, adminuser;
@@ -212,15 +212,48 @@ grant insert, delete on tag_of_release to adminuser;
 grant insert, delete on artist to adminuser;
 grant insert, delete on member_of to adminuser;
 grant insert, delete on genre to adminuser;
-grant insert, delete on release_type to adminuser
+grant insert, delete on release_type to adminuser;
 grant insert, delete on genre_of_release to adminuser;
 grant insert, delete on artist_of_release to adminuser;
 grant insert, delete on tag_of_list to normaluser, adminuser;
 grant insert, delete on release_in_list to normaluser, adminuser;
 grant insert, delete on release_list to normaluser, adminuser;
-
-
-
+create public synonym add_user for add_user;
+create public synonym edit_user for edit_user;
+create public synonym delete_user for delete_user;
+create public synonym add_track for add_track;
+create public synonym edit_track for edit_track;
+create public synonym delete_track for delete_track;
+create public synonym add_artist for add_artist;
+create public synonym edit_artist for edit_artist;
+create public synonym delete_artist for delete_artist;
+create public synonym add_rating for add_rating;
+create public synonym edit_rating for edit_rating;
+create public synonym delete_rating for delete_rating;
+create public synonym add_genre for add_genre;
+create public synonym delete_genre for delete_genre;
+create public synonym edit_genre for edit_genre;
+create public synonym add_music_release for add_music_release;
+create public synonym edit_music_release for edit_music_release;
+create public synonym delete_music_release for delete_music_release;
+grant execute on add_user to adminuser,entryuser;
+grant execute on edit_user to adminuser;
+grant execute on delete_user to adminuser;
+grant execute on add_track to adminuser;
+grant execute on edit_track to adminuser;
+grant execute on delete_track to adminuser;
+grant execute on add_artist to adminuser;
+grant execute on edit_artist to adminuser;
+grant execute on delete_artist to adminuser;
+grant execute on add_genre to adminuser;
+grant execute on edit_genre to adminuser;
+grant execute on delete_genre to adminuser;
+grant execute on add_rating to adminuser,normaluser;
+grant execute on edit_rating to adminuser,normaluser;
+grant execute on delete_rating to adminuser,normaluser;
+grant execute on add_music_release to adminuser;
+grant execute on edit_music_release to adminuser;
+grant execute on delete_music_release to adminuser;
 ------------------------------PROCEDURES FOR SOUNDBASE_USERS------------------------------------------------------
 CREATE OR REPLACE PROCEDURE ADD_USER (
     p_username VARCHAR2,
@@ -385,7 +418,7 @@ CREATE OR REPLACE PROCEDURE EDIT_RATING (
 BEGIN
     UPDATE RATING
     SET STAR_VALUE = p_star_value,
-    SOUNDBASE_USER_ID = p_soundbase_user_id,
+    SOUNDBASE_USERS_ID = p_soundbase_user_id,
     RATED_RELEASE_ID = p_rated_release_id,
     CONTENTS = p_contents
     WHERE RATING_ID = p_rating_id;
