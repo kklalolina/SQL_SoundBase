@@ -221,7 +221,7 @@ def createAlbum():
                                                     select_list="RELEASE_ID")[0][0][0]
 
                 for i in artists:
-                    print(i)
+
                     g.db.insert_into_table("ARTIST_OF_RELEASE",
                                            {"ARTIST_ID": i,
                                             "RELEASE_ID": release_id})
@@ -295,7 +295,7 @@ def addTrack(id):
 @admin_login_required
 @requires_db_connection
 def detailsAlbum(id):
-    # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
+
     release, release_names = g.db.select_from_table("MUSIC_RELEASE", where_list={"RELEASE_ID": id})
     release = release[0]
 

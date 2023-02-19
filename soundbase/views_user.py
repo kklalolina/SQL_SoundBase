@@ -55,6 +55,8 @@ def create():
             error = "Username is required."
         elif not password:
             error = "Password is required."
+        elif any(char.isspace() for char in username):
+            error = "Username cant contain any whitespaces!"
         elif len(password)<8 or not any(char.islower() for char in password) or not any(char.isupper() for char in password) or not any(char.isdigit() for char in password):
             error = "Password must contain at least 8 characters, at least one small letter, one big letter and one digit!"
         elif(password!=cpassword):
@@ -62,10 +64,10 @@ def create():
 
         # Connect to the database and add the new user
         if error is None:
-            # DO ZMIANY POTEM
+
             conn = cx_Oracle.connect("system/Admin123@localhost:1522/sound")
             cursor = conn.cursor()
-            cursor.callproc('ADD_USER', [username,'01-JAN-21', password, int(usr_type)])
+            cursor.callproc('ADD_USER', [username,password])
             conn.commit()
             cursor.close()
             conn.close()
@@ -73,7 +75,7 @@ def create():
         else:
             flash(error)
             print(error)
-    return render_template("admin/User/createSingle.html")
+    return render_template("admin/User/create.html")
 
 @bp.route('/edit/<id>', methods=['GET', 'POST'])
 @admin_login_required
@@ -89,7 +91,7 @@ def edit(id):
             error = "Username is required."
         elif not password:
             error = "Password is required."
-        elif len(password)<8 or any(char.islower() for char in password) or not any(char.isupper() for char in password) or not any(char.isdigit() for char in password):
+        elif len(password)<8 or not any(char.islower() for char in password) or not any(char.isupper() for char in password) or not any(char.isdigit() for char in password):
             error = "Password must contain at least 8 characters, at least one small letter, one big letter and one digit!"
         elif password != cpassword:
             error= "Passwords must match!"
@@ -148,4 +150,4 @@ def details(id):
 
     cursor.close()
     conn.close()
-    return render_template("admin/User/detailsSingle.html", output = userdata)
+    return render_template("admin/User/details.html", output = userdata)

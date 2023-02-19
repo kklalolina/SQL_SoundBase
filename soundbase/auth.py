@@ -43,8 +43,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
         error = None
+
         rows,names = g.db.select_from_table("SOUNDBASE_USERS", {"USERNAME": username})
         user = rows[0]
+
         if user is None:
             error = "Incorrect username."
         elif not user[names['PASSWORD']] == password:

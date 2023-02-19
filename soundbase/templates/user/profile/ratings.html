@@ -1,0 +1,55 @@
+{% extends "base.html" %} {% block title %}Home{% endblock %}
+{%block searchbar %}
+
+{% endblock %}
+{% block content %}
+
+<div class="container" style="padding-top:150px;margin-left:-100px">
+    <h1 style="margin-left:-100px;margin-bottom:50px;">Hello {{g.user[1]}}</h1>
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="author-card pb-3">
+                <div class="wizard">
+                    <nav class="list-group list-group-flush">
+                        <a class="list-group-item list-group-item-dark list-group-item-action" href="{{ url_for('views_soundbaseUser.userdata') }}" style="color:black">
+                            Change password
+                        </a>
+                        <a class="list-group-item" style="color:black" >
+                            Your ratings
+                        </a>
+                        <a class="list-group-item list-group-item-dark list-group-item-action" href="{{ url_for('views_soundbaseUser.playlists') }}" style="color:black">
+                            Your playlists
+                        </a>
+
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8" style="">
+                <table class="table" style="color:white">
+                    <tr>
+                    <th>#</th>
+                    <th>Stars</th>
+                    <th>Release</th>
+                        <th>Date</th>
+
+                {% for row in output %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>
+                    {% for i in range(row[1]) %}
+                    <i class="bi bi-star-fill"></i>
+                    {% endfor %}
+                </td>
+                    <td><a style="color:white" href="{{ url_for('views_soundbaseUser.release', id=row[4]) }}">{{ row[2] }}</a></td>
+                <td>{{ row[3] }}</td>
+            </tr>
+
+            {% endfor %}
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+{% endblock %}

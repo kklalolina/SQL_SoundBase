@@ -140,6 +140,17 @@ class Database:
         self.connection.commit()
         cursor.close()
 
+    # TODO: NEEDS TO BE TESTED!!
+    def select_average_of_release(self, release):
+        cursor = self.connection.cursor()
+        query = "SELECT AVG(STAR_VALUE) FROM RATING INNER JOIN MUSIC_RELEASE ON RATING.RATED_RELEASE_ID =" \
+                " MUSIC_RELEASE.RELEASE_ID WHERE RELEASE_ID = :release"
+        cursor.execute(query, release)
+        rows = cursor.fetchone()
+        cursor.close()
+
+        return rows
+
     def close_connection(self):
         self.connection.close()
 

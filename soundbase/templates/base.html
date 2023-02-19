@@ -14,6 +14,7 @@
       href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
       crossorigin="anonymous"
     />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
 
     <title>{% block title %}Home{% endblock %}</title>
   </head>
@@ -43,7 +44,7 @@
 
                   {% if g.user %}
                     <div  class="navbar-nav ml-auto" style="font-size:20px;margin-top:2%;">
-                        <a class="nav-item nav-link" id="profile" href="/">{{ g.user[1]}}</a>
+                        <a class="nav-item nav-link" id="profile" href="{{ url_for('views_soundbaseUser.userdata') }}"><i class="fa fa-user "></i> {{ g.user[1]}}</a>
                       <a class="nav-item nav-link" id="logout" href="/logout" >Logout</a>
                     </div>
                       {% else %}

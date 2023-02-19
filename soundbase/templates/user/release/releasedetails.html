@@ -1,0 +1,117 @@
+{% extends "base.html" %} {% block title %}Home{% endblock %}
+
+{%block searchbar %}
+
+{% endblock %}
+{% block content %}
+
+<div style="padding-top:100px;margin-left:-450px">
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endfor %}
+    <div class="row">
+    <div class="col-4" style="">
+<h3>Release name: {{release[1]}} </h3>
+<h5>Type: {{type}}</h5>
+<h4>Artists:
+{% for i in artists %}
+       </br> {{ i }}
+{% endfor %}
+
+</h4>
+<h6>Genre: {{genre}}</h6>
+<h6>Tag: {{release[2]}}</h6>
+</div>
+<div class="col-5" style="">
+
+<table class="table" style="color:white;border-collapse: collapse;border:0">
+
+                <tr>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">#</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Title</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Length</th>
+
+                </tr>
+
+
+          {% for row in tracks %}
+            <tr style="cursor: pointer;height:100px;padding: 10px 0;">
+                <td style="border:0;padding-top:30px;">{{ row[0] }}</td>
+                <td style="padding-top:30px;border:0;">{{ row[1] }}</td>
+                <td style="padding-top:30px;border:0;">{{ row[2] }}</td>
+
+            </tr>
+            {% endfor %}
+        </table>
+</div>
+        <div class="col-5" style="padding-top:30px;">
+            <h1>Average star rating: {{averagestar}}</h1>
+        </div>
+   </div>
+
+    <div class="row" style="padding-top:100px;padding-left:70px">
+
+        {% if g.user %}
+        <form method="POST">
+            <div class="row" style="padding-top:100px;padding-left:70px">
+        <label class="control-label" style="margin-right:20px;padding-top:25px"><h5>Rate</h5></label>
+        <div style="padding-top:20px">
+          <select name="star" class="custom-select" style="width:100px;">
+              <option value="1">1 star</option>
+              <option value="2">2 stars</option>
+              <option value="3">3 stars</option>
+              <option value="4">4 stars</option>
+              <option value="5">5 stars</option>
+          </select>
+            </div>
+
+
+        <div class="form-group" style="padding-left:10px">
+                    <textarea placeholder="Write your opinion" rows="3" cols="100" name="content" style="resize:none;" class="form-control bg-dark text-white"></textarea>
+                </div>
+                <div class="form-group" style="padding-top:20px;padding-left:10px">
+                    <input type="submit" value="Add your rating" class="btn btn-dark" />
+                </div>
+            </div>
+
+        </form>
+        {% endif %}
+        <table class="table" style="color:white;border-collapse: collapse;border:0">
+
+                <tr>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">User</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Stars</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Comment</th>
+                    <th style="border:0;border-bottom: 1px solid #ddd;">Date</th>
+
+                </tr>
+
+
+
+          {% for row in ratings %}
+            <tr  style="cursor: pointer;height:100px;padding: 10px 0;">
+                <td style="border:0;padding-top:30px;">{{ row[0] }}</td>
+                <td style="padding-top:30px;border:0;">
+                    {% for i in range(row[1]) %}
+                    <i class="bi bi-star-fill"></i>
+                    {% endfor %}
+                    </td>
+                <td style="padding-top:30px;border:0;">{{ row[2] }}</td>
+                <td style="padding-top:30px;border:0;">{{ row[3] }}</td>
+                {% if row[4]==g.user[0] %}
+                    <td style="padding-top:30px;border:0;"><a href="{{ url_for('views_soundbaseUser.deleteRating', id=row[5], rid=release[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a></td>
+                {% endif %}
+            </tr>
+
+
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}
