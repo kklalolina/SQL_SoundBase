@@ -13,10 +13,10 @@ bp = Blueprint("views_artist", __name__)
 def artists():
     if request.method == 'POST':
         search = request.form['SearchString']
-        if search.isDigit():
+        if search.isdigit():
            rows = g.db.select_from_table("ARTIST",
                                          where_list=[{"ARTIST_ID":search},
-                                                     {"%ARTIST_NAME":search})
+                                                     {"%ARTIST_NAME":search}])
         else:
            rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})
            

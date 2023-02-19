@@ -3,12 +3,14 @@ import os
 from flask import Flask, g
 from soundbase import db as db_module
 
+
 def create_app(test_config=None):
     # creating the application instance and setting default config
     app = Flask(__name__, instance_relative_config=True)
+    app.config.from_mapping(
+        SECRET_KEY='dev'
+    )
 
-    with app.app_context():
-        g.db=db.Database()
     # load config
     if test_config is None:
         # load from config.py file, if it exists

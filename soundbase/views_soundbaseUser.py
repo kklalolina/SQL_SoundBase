@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, flash, g, session, redirect, url_for
-from soundbase.auth import login_required, db, admin_login_required
+from soundbase.auth import login_required, admin_login_required
 import cx_Oracle
-from soundbase.auth import ADMIN_TYPE, NORMAL_TYPE
-
+from soundbase.db_constants import ADMIN_TYPE, NORMAL_TYPE
+from soundbase.db import requires_db_connection
+import soundbase.db as db
 bp = Blueprint("views_soundbaseUser", __name__)
 
 

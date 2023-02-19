@@ -9,17 +9,17 @@ class Database:
     connection = None
 
     def __init__(self, user_type):
-        print("Connecting to", "127.0.0.1:1521/dbpl...")
+        print("Connecting to", "127.0.0.1:1522/sound...")
         # This probably will not work for you, check your pluggable database name and replace dbpl with it
         if user_type == db_constants.ENTRY_TYPE:
             print("...as entry.")
-            self.connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1521/dbpl")
+            self.connection = oracledb.connect("entryuser/entrypass@127.0.0.1:1522/sound")
         elif user_type == db_constants.NORMAL_TYPE:
             print("...as normal.")
-            self.connection = oracledb.connect("normaluser/normalpass@127.0.0.1:1521/dbpl")
+            self.connection = oracledb.connect("normaluser/normalpass@127.0.0.1:1522/sound")
         elif user_type == db_constants.ADMIN_TYPE:
             print("...as admin.")
-            self.connection = oracledb.connect("adminuser/adminpass@127.0.0.1:1521/dbpl")
+            self.connection = oracledb.connect("adminuser/adminpass@127.0.0.1:1522/sound")
         else:
             print("Wrong type - Connection failed")
 
