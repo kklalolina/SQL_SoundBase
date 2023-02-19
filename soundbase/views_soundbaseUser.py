@@ -329,5 +329,5 @@ def addRelease(id):
 @admin_not_allowed
 @login_required
 def deleteRelease(id,rid):
-    g.db.call_procedure("delete_release_from_list", [rid,id]) # TODO nie dziala
+    g.db.call_procedure("delete_release_from_list", [rid,id])
     return redirect(url_for('views_soundbaseUser.playlistdetails', id=id))
