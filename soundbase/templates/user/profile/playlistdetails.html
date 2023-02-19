@@ -25,17 +25,21 @@
 
           {% for row in output %}
             <tr id="row{{row[1]}}" class="clickable" onclick="window.location.href='{{ url_for('views_soundbaseUser.release', id=row[1]) }}';" onmouseout="document.getElementById('row{{row[1]}}').style.backgroundColor ='#26282B'" onmouseover="document.getElementById('row{{row[1]}}').style.backgroundColor ='#222426'" style="cursor: pointer;height:100px;padding: 10px 0;">
-                <td style="border:0;">{{row[0]}}</td>
-                <td style="padding-top:30px;border:0;"><a style="color:white" href="{{ url_for('views_soundbaseUser.release', id=row[0]) }}">{{ row[1] }}</a></td>
+                <td style="padding-top:30px;border:0;">{{row[0]}}</td>
+                <td style="padding-top:30px;border:0;"><a style="color:white" href="{{ url_for('views_soundbaseUser.release', id=row[1]) }}">{{ row[2] }}</a></td>
                 <td style="padding-top:30px;border:0;">{{ row[3] }}</td>
                 <td style="padding-top:30px;border:0;">
                     {% for artist in artists %}
-                        {% if artist == row[0] %}
+                        {% if artist == row[1] %}
                             {% for i in artists[artist] %}
                                 {{ i }}
                             {% endfor %}
                         {% endif %}
                     {% endfor %}
+
+                </td>
+                <td>
+                    <td style="padding-top:30px;border:0;"><a href="{{ url_for('views_soundbaseUser.deleteRelease', id=playlist[0], rid=row[1]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a></td>
 
                 </td>
 

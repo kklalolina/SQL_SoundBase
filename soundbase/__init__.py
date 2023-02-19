@@ -42,8 +42,6 @@ def register_blueprints(app):
     app.register_blueprint(views_artist.bp, url_prefix='/admin')
     from . import views_user
     app.register_blueprint(views_user.bp, url_prefix='/admin')
-    from . import views_track
-    app.register_blueprint(views_track.bp, url_prefix='/admin')
     from . import views_release
     app.register_blueprint(views_release.bp, url_prefix='/admin')
     from . import views_rating

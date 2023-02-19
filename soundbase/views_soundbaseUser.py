@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, g, session, redirect, url_for
-from soundbase.auth import login_required, admin_login_required
+from soundbase.auth import login_required, admin_login_required, admin_not_allowed
 import cx_Oracle
 from soundbase.db_constants import ADMIN_TYPE, NORMAL_TYPE
 from soundbase.db import requires_db_connection
@@ -9,6 +9,7 @@ bp = Blueprint("views_soundbaseUser", __name__)
 
 @bp.route('/release/<id>', methods=['POST','GET'])
 @requires_db_connection
+@admin_not_allowed
 def release(id):
     if request.method=='POST': # Rating
         star = request.form['star']
@@ -102,6 +103,7 @@ def release(id):
 
 @bp.route('/artists/list')
 @requires_db_connection
+@admin_not_allowed
 def artistsList():
     artists = g.db.select_from_table("ARTIST",
                                       select_list=["ROWNUM", "ARTIST_ID", "ARTIST_NAME"])[0]
@@ -109,6 +111,7 @@ def artistsList():
 
 @bp.route('/artists/<id>')
 @requires_db_connection
+@admin_not_allowed
 def artist(id):
 
 
@@ -125,6 +128,7 @@ def artist(id):
 
 @bp.route('/genres')
 @requires_db_connection
+@admin_not_allowed
 def genresList():
 
     genres = g.db.select_from_table("GENRE", select_list=["ROWNUM", "GENRE_NAME", "GENRE_DESCRIPTION"])[0]
@@ -133,6 +137,7 @@ def genresList():
 
 @bp.route('/tags')
 @requires_db_connection
+@admin_not_allowed
 def tagsList():
 
     tags = g.db.select_from_table("DESCRIPTIVE_TAG", select_list=["ROWNUM", "TAG_NAME", "TAT_DESCRIPTION"])[0]
@@ -141,6 +146,8 @@ def tagsList():
 
 @bp.route('/user/data', methods=['POST','GET'])
 @requires_db_connection
+@admin_not_allowed
+@login_required
 def userdata():
     if request.method=='POST':
         oldpassword = request.form['oldpassword']
@@ -168,6 +175,8 @@ def userdata():
 
 @bp.route('/user/ratings')
 @requires_db_connection
+@admin_not_allowed
+@login_required
 def ratings():
     userratings = g.db.select_from_table(["RATING","MUSIC_RELEASE"],
                                          select_list=["ROWNUM", "STAR_VALUE","RELEASE_NAME", "RATING_DATE","RATED_RELEASE_ID"],
@@ -177,6 +186,8 @@ def ratings():
 
 @bp.route('/user/playlists', methods=['GET', 'POST'])
 @requires_db_connection
+@admin_not_allowed
+@login_required
 def playlists():
     if request.method=='POST':
         playlist = request.form['playlistname']
@@ -208,6 +219,8 @@ def playlists():
 
 @bp.route('/user/playlist/<id>')
 @requires_db_connection
+@admin_not_allowed
+@login_required
 def playlistdetails(id):
 
     playlist = g.db.select_from_table("RELEASE_LIST", where_list=[{"LIST_ID": id}])[0][0]
@@ -221,8 +234,8 @@ def playlistdetails(id):
 
     for i in releases_id:
         temp = g.db.select_from_table(["MUSIC_RELEASE","RELEASE_TYPE"],
-                                      select_list=["RELEASE_ID","RELEASE_NAME","RELEASE_DATE","TYPE_NAME"],
-                                      join_list=[("RELEASE_TYPE_ID", "RELEASE_TYPE_ID", "INNER")])[0][0]
+                                      select_list=["RELEASE_ID","RELEASE_NAME","TYPE_NAME"],
+                                      join_list=[("RELEASE_TYPE_ID", "TYPE_ID", "INNER")])[0][0]
 
         temp = list(temp)
         temp.insert(0, i[1])
@@ -235,6 +248,7 @@ def playlistdetails(id):
                                              where_list=[{"RELEASE_ID": row[1]}])[0]
         artists_id[row[1]] = [x[0] for x in temp]
 
+
     artists = {}
 
     for i in artists_id:
@@ -246,7 +260,7 @@ def playlistdetails(id):
                 break
             temp = g.db.select_from_table("ARTIST",
                                           select_list=["ARTIST_NAME"],
-                                          where_list=[{"ARTIST_ID": j}])[0][0][0]
+                                          where_list=[{"ARTIST_ID": j}])[0][0]
             if len(artists[i]) == len(artists_id[i]) - 1:
                 artists[i].append(temp[0])
             else:
@@ -264,12 +278,56 @@ def playlistdetails(id):
 
 @bp.route('/rating/<rid>/delete/<id>')
 @requires_db_connection
+@admin_not_allowed
+@login_required
 def deleteRating(id, rid):
     g.db.call_procedure("DELETE_RATING", [id])
     return redirect(url_for('views_soundbaseUser.release',id=rid))
 
 @bp.route('/playlist/delete/<id>')
 @requires_db_connection
+@admin_not_allowed
+@login_required
 def deletePlaylist(id):
     # TODO tutaj procedura
     return redirect(url_for('views_soundbaseUser.playlists'))
+
+@bp.route('/user/playlist/add/<id>', methods=['POST','GET'])
+@requires_db_connection
+@admin_not_allowed
+@login_required
+def addRelease(id):
+    if request.method=='POST':
+        playlistid = request.form['playlistid']
+
+
+        # check if release is already in the playlist
+        check = g.db.select_from_table("RELEASE_IN_LIST", where_list=[{"LIST_ID":playlistid, "RELEASE_ID":id}])[0]
+
+        if not check:
+            g.db.call_procedure("ADD_RELEASE_TO_LIST",[id,playlistid])
+
+            flash('The release was successfully added!')
+            return redirect(url_for('views.index'))
+        else:
+            flash('The release is already in the playlist!')
+    release = g.db.select_from_table("MUSIC_RELEASE",
+                                           select_list=["RELEASE_ID", "RELEASE_NAME"],
+                                           where_list=[{"RELEASE_ID": id}])[0][0]
+
+    userplaylists = g.db.select_from_table("RELEASE_LIST",
+                                           select_list=["LIST_ID", "LIST_NAME", "CREATION_DATE"],
+                                           where_list=[{"AUTHOR_ID": g.user[0]}])[0]
+    print(userplaylists)
+    if not userplaylists:
+        flash('You dont have any playlists!')
+        return redirect(url_for('views.index'))
+    return render_template("user/profile/addrelease.html",playlists=userplaylists, release=release)
+
+@bp.route('/user/playlist/<rid>/delete/<id>', methods=['POST','GET'])
+@requires_db_connection
+@admin_not_allowed
+@login_required
+def deleteRelease(id,rid):
+    g.db.call_procedure("delete_release_from_list", [rid,id]) # TODO nie dziala
+    return redirect(url_for('views_soundbaseUser.playlistdetails', id=id))

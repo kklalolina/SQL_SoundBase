@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, g, session, redirect, url_for
-from soundbase.auth import login_required, admin_login_required
+from soundbase.auth import login_required, admin_login_required, admin_not_allowed
 import cx_Oracle
 from soundbase.db_constants import ADMIN_TYPE, NORMAL_TYPE
 from soundbase.db import requires_db_connection
@@ -9,6 +9,7 @@ bp = Blueprint("views", __name__)
 
 @bp.route('/', methods=['GET', 'POST'])
 @requires_db_connection
+@admin_not_allowed
 def index():
     try:
         g.db = db.Database()

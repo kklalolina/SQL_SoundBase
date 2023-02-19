@@ -16,9 +16,9 @@ def artists():
         if search.isdigit():
            rows = g.db.select_from_table("ARTIST",
                                          where_list=[{"ARTIST_ID":search},
-                                                     {"%ARTIST_NAME":search}])
+                                                     {"%ARTIST_NAME":search}])[0]
         else:
-           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})
+           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})[0]
            
         return render_template("admin/Artist/list.html", output=rows)
     rows = g.db.select_from_table("ARTIST")[0]

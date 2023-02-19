@@ -25,7 +25,7 @@ def register():  # ----NA RAZIE NIE UZYWA BAZY DANYCH!! TYLKO SPRAWDZA POPRAWNOS
 
         if error is None:
             try:
-                g.db.call_proc("ADD_USER", [username, password])
+                g.db.call_procedure("ADD_USER", [username, password])
             except oracledb.IntegrityError:
                 error = "Username already taken."
             else:
@@ -104,4 +104,12 @@ def admin_login_required(view):
 
         return view(**kwargs)
 
+    return wrapped_view
+
+def admin_not_allowed(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None or g.user[3] == db_constants.NORMAL_TYPE:
+            return view(**kwargs)
+        return redirect(url_for('views.admin'))
     return wrapped_view
