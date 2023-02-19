@@ -26,7 +26,30 @@
 </h4>
 <h6>Genre: {{genre}}</h6>
 <h6>Tag: {{release[2]}}</h6>
-</div>
+
+        {% if averagestar %}
+            <h1>Average rating: {{ averagestar+half }} star(s) </br>
+            {% for i in range(averagestar) %}
+                <i class="bi bi-star-fill"></i>
+            {% endfor %}
+            {% if half!=0 %}
+                <i class="bi bi-star-half"></i>
+
+            {% for i in range(5-averagestar-1) %}
+                <i class="bi bi-star"></i>
+            {% endfor %}
+            {% else %}
+                {% for i in range(5-averagestar) %}
+                <i class="bi bi-star"></i>
+            {% endfor %}
+            {% endif %}
+
+            {% else %}
+                <h1>Average rating: ? star(s)</h1> </br>
+
+            {% endif %}
+            </h1>
+        </div>
 <div class="col-5" style="">
 
 <table class="table" style="color:white;border-collapse: collapse;border:0">
@@ -49,9 +72,7 @@
             {% endfor %}
         </table>
 </div>
-        <div class="col-5" style="padding-top:30px;">
-            <h1>Average star rating: {{averagestar}}</h1>
-        </div>
+
    </div>
 
     <div class="row" style="padding-top:100px;padding-left:70px">

@@ -96,6 +96,7 @@ def release(id):
     half=0
     if averagestar is not None:
         half=averagestar-int(averagestar)
+        averagestar=int(averagestar)
 
     return render_template("user/release/releasedetails.html", release=row, artists=artists, genre=genre, tag=tag_name, type=type_name, tracks=tracks,ratings=ratings, averagestar=averagestar, half=half)
 
@@ -157,8 +158,8 @@ def userdata():
             error = "Passwords must match!"
 
         if error is None:
-            #g.user = (g.user[0], session.get('username'), newpassword, session.get('type')) - nie dziala
-            #g.db.call_procedure("EDIT_USER",[g.user[0],g.user[1],g.user[2]]) - nie dziala
+            session['password']=newpassword
+            g.db.call_procedure("EDIT_USER",[g.user[0],g.user[1],g.user[2]])
             flash('Password changed successfully!')
         else:
             flash(error)

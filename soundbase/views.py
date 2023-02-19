@@ -135,7 +135,12 @@ def index():
 
             tags = g.db.select_from_table("DESCRIPTIVE_TAG")[0]
 
-            return render_template("user/index.html", output=rows, artists=artists, genres=genres, tags=tags)
+            averageratings = {}
+            for i in rows:
+                rating=g.db.select_average_of_release([i[0]])[0]
+                averageratings[i[0]]=rating
+
+            return render_template("user/index.html", output=rows, artists=artists, genres=genres, tags=tags, averageratings=averageratings)
 
 
 @bp.route('/admin')
