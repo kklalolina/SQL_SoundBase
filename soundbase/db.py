@@ -146,6 +146,7 @@ class Database:
             result = cursor.callfunc(name,var, [arguments])
         else:
             result = cursor.callfunc(name,var, arguments)
+        table = var.newobject()
         self.connection.commit()
         cursor.close()
         return result

@@ -1,3 +1,4 @@
+import oracledb
 from flask import Blueprint, render_template, request, flash, g, session, redirect, url_for
 from soundbase.auth import login_required, admin_login_required, admin_not_allowed
 import cx_Oracle
@@ -216,16 +217,19 @@ def playlists():
             error="Playlist name cant be empty!"
 
         if error is None:
-            g.db.insert_into_table("RELEASE_LIST",
-                                   {"AUTHOR_ID": g.user[0],
-                                    "LIST_NAME": playlist,
-                                    "CREATION_DATE": '01-JAN-11'})
-            listid = g.db.select_from_table("RELEASE_LIST",
-                                            select_list=["LIST_ID"],
-                                            where_list=[{"LIST_NAME":playlist}])[0][0][0]
-            g.db.insert_into_table("TAG_OF_LIST",
-                                   {"LIST_ID": listid ,
-                                    "TAG_ID": tag})
+            try:
+                g.db.insert_into_table("RELEASE_LIST",
+                                       {"AUTHOR_ID": g.user[0],
+                                        "LIST_NAME": playlist,
+                                        "CREATION_DATE": '01-JAN-11'})
+                listid = g.db.select_from_table("RELEASE_LIST",
+                                                select_list=["LIST_ID"],
+                                                where_list=[{"LIST_NAME":playlist}])[0][0][0]
+                g.db.insert_into_table("TAG_OF_LIST",
+                                       {"LIST_ID": listid ,
+                                        "TAG_ID": tag})
+            except oracledb.IntegrityError:
+                flash("Playlist name already taken!")
         else:
             flash(error)
 
