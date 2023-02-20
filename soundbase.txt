@@ -489,43 +489,24 @@ EXCEPTION
 END;  
 
 create or replace procedure delete_track(
-    p_track_id IN INTEGER)
+    p_track_id IN INTEGER,
+    p_release_id IN INTEGER)
 IS
-    TYPE RELEASE_COLLECTION IS TABLE OF INTEGER;
     l_track_no INTEGER;
-    l_release_collection RELEASE_COLLECTION;
-    CURSOR track_to_move_up IS
-        SELECT TRACK_ID, TRACK_NO, RELEASE_ID, ROWID
-        FROM TRACKS_IN_RELEASE
-        WHERE TRACK_ID != p_track_id
-        FOR UPDATE;
 BEGIN
     SELECT TRACK_NO 
     INTO l_track_no
     FROM TRACKS_IN_RELEASE
-    WHERE TRACK_ID = p_track_id;
-    l_release_collection := RELEASE_COLLECTION();
-    FOR i IN (SELECT MUSIC_RELEASE.RELEASE_ID AS r_id
-              FROM MUSIC_RELEASE INNER JOIN TRACKS_IN_RELEASE
-              ON MUSIC_RELEASE.RELEASE_ID = TRACKS_IN_RELEASE.RELEASE_ID
-              WHERE TRACKS_IN_RELEASE.TRACK_ID = p_track_id) LOOP
-        l_release_collection.EXTEND;
-        l_release_collection(l_release_collection.LAST) := i.r_id;
-    END LOOP;
+    WHERE TRACK_ID = p_track_id and release_id = p_release_id ;
     
     DELETE FROM TRACK
     WHERE TRACK_ID = p_track_id;
     DELETE FROM TRACKS_IN_RELEASE
-    WHERE TRACK_ID = p_track_id;
+    WHERE TRACK_ID = p_track_id and release_id = p_release_id;
     
-    FOR track in track_to_move_up LOOP
-        IF track.track_no > l_track_no
-           AND track.track_id member of l_release_collection THEN
-           UPDATE TRACKS_IN_RELEASE
-           SET track_no = track_no - 1
-           WHERE ROWID = track.ROWID;
-        END IF;
-    END LOOP;
+    UPDATE TRACKS_IN_RELEASE
+    SET TRACK_NO = TRACK_NO + 1
+    WHERE RELEASE_ID = P_RELEASE_ID AND TRACK_NO > l_track_no;
 END;
 
 CREATE OR REPLACE PROCEDURE ADD_RELEASE_TO_LIST (
@@ -625,6 +606,18 @@ CREATE OR REPLACE PACKAGE BODY PC_TOPIC_MANAGEMENT AS
         return result_table;
     END;
 END PC_TOPIC_MANAGEMENT;
+
+CREATE PUBLIC SYNONYM TOPICS FOR PC_TOPIC_MANAGEMENT;
+GRANT EXECUTE ON TOPICS TO NORMALUSER, ADMINUSER;
+DROP PUBLIC SYNONYM GET_TOPICS;
+
+select topics.get_topics(1) from dual;
+
+
+CREATE PUBLIC SYNONYM TOPIC FOR TOPIC;
+CREATE PUBLIC SYNONYM TOPIC_TABLE FOR TOPIC_TABLE;
+GRANT EXECUTE ON TOPIC TO ADMINUSER, NORMALUSER;
+GRANT EXECUTE ON TOPIC_TABLE TO ADMINUSER, NORMALUSER;
 --------CONSTRAINT REDEFINITION--------
 alter table tracks_in_release
 drop constraint TRACK_FK_TRACK
