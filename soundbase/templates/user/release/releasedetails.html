@@ -18,6 +18,7 @@
     <div class="col-4" style="">
 <h3>Release name: {{release[1]}} </h3>
 <h5>Type: {{type}}</h5>
+<h6>Add date: {{release[2]}}</h6>
 <h4>Artists:
 {% for i in artists %}
        </br> {{ i }}
@@ -122,7 +123,16 @@
                     <i class="bi bi-star-fill"></i>
                     {% endfor %}
                     </td>
-                <td style="padding-top:30px;border:0;">{{ row[2] }}</td>
+                <td style="padding-top:0px;border:0;">
+                    {% if row[2] %}
+                        {% for i in range(0,row[2]|length,100) %}
+                            {% if i!=0 and i % 100 == 0 %}
+                                </br>
+                            {% endif %}
+                            {{ row[2][i-100:i] }}
+                        {% endfor %}
+                    {% endif %}
+                </td>
                 <td style="padding-top:30px;border:0;">{{ row[3] }}</td>
                 {% if row[4]==g.user[0] %}
                     <td style="padding-top:30px;border:0;"><a href="{{ url_for('views_soundbaseUser.deleteRating', id=row[5], rid=release[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a></td>

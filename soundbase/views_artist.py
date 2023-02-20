@@ -16,12 +16,21 @@ def artists():
         if search.isdigit():
            rows = g.db.select_from_table("ARTIST",
                                          where_list=[{"ARTIST_ID":search},
-                                                     {"%ARTIST_NAME":search}])
+                                                     {"%ARTIST_NAME":search}])[0]
+           for i in range(len(rows)):
+               rows[i] = list(rows[i])
+               rows[i][2] = str(rows[i][2])[:10]
         else:
-           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})
+           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})[0]
+           for i in range(len(rows)):
+               rows[i] = list(rows[i])
+               rows[i][2] = str(rows[i][2])[:10]
            
         return render_template("admin/Artist/list.html", output=rows)
     rows = g.db.select_from_table("ARTIST")[0]
+    for i in range(len(rows)):
+        rows[i] = list(rows[i])
+        rows[i][2] = str(rows[i][2])[:10]
     return render_template("admin/Artist/list.html", output=rows)
 
 

@@ -140,6 +140,8 @@ def index():
             for i in rows:
                 rating=g.db.select_average_of_release([i[0]])[0]
                 averageratings[i[0]]=rating
+            res = g.db.call_function('topics.get_topics', [g.user[0]])
+            print(res)
 
             return render_template("user/index.html", output=rows, artists=artists, genres=genres, tags=tags, averageratings=averageratings)
 

@@ -31,6 +31,10 @@ def release(id):
     row = g.db.select_from_table("MUSIC_RELEASE",
                                   where_list=[{"RELEASE_ID": id}])[0][0]
 
+    row = list(row)
+    row[2]=str(row[2])[:10]
+    print(row)
+
     tracks_id = g.db.select_from_table("TRACKS_IN_RELEASE",
                                  select_list=["TRACK_ID","TRACK_NO"],
                                  where_list=[{"RELEASE_ID": id}])[0]
@@ -92,12 +96,18 @@ def release(id):
                                     where_list=[{"RATED_RELEASE_ID": id}],
                                     join_list = [("SOUNDBASE_USERS_ID", "USER_ID", "INNER")])[0]
 
+    for i in range(len(ratings)):
+        ratings[i] = list(ratings[i])
+        ratings[i][3] = str(ratings[i][3])[:10] # remove time from date
+
     averagestar = g.db.select_average_of_release([id])[0]
     print(averagestar)
     half=0
     if averagestar is not None:
         half=averagestar-int(averagestar)
         averagestar=int(averagestar)
+
+
 
     return render_template("user/release/releasedetails.html", release=row, artists=artists, genre=genre, tag=tag_name, type=type_name, tracks=tracks,ratings=ratings, averagestar=averagestar, half=half)
 
@@ -122,6 +132,9 @@ def artist(id):
                                      select_list=["ROWNUM", "RELEASE_NAME", "RELEASE_DATE"],
                                      where_list=[{"ARTIST_ID": id}],
                                      join_list=[("RELEASE_ID", "RELEASE_ID", "INNER")])[0]
+    for i in range(len(releases)):
+        releases[i] = list(releases[i])
+        releases[i][2] = str(releases[i][2])[:10] # remove time from date
 
     return render_template("user/artist/details.html", output=data, releases=releases)
 
@@ -182,6 +195,11 @@ def ratings():
                                          select_list=["ROWNUM", "STAR_VALUE","RELEASE_NAME", "RATING_DATE","RATED_RELEASE_ID"],
                                          where_list=[{"SOUNDBASE_USERS_ID":g.user[0]}],
                                          join_list=[("RATED_RELEASE_ID","RELEASE_ID","INNER")])[0]
+
+    for i in range(len(userratings)):
+        userratings[i] = list(userratings[i])
+        userratings[i][3] = str(userratings[i][3])[:10] # remove time from date
+
     return render_template("user/profile/ratings.html", output=userratings)
 
 @bp.route('/user/playlists', methods=['GET', 'POST'])
@@ -214,6 +232,11 @@ def playlists():
     userplaylists = g.db.select_from_table("RELEASE_LIST",
                                          select_list=["ROWNUM","LIST_ID", "LIST_NAME", "CREATION_DATE"],
                                          where_list=[{"AUTHOR_ID": g.user[0]}])[0]
+
+    for i in range(len(userplaylists)):
+        userplaylists[i] = list(userplaylists[i])
+        userplaylists[i][3] = str(userplaylists[i][3])[:10] # remove time from date
+
     tags = g.db.select_from_table("DESCRIPTIVE_TAG")[0]
     return render_template("user/profile/playlists.html",output=userplaylists,tags=tags)
 

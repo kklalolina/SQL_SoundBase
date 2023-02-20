@@ -140,6 +140,18 @@ class Database:
         self.connection.commit()
         cursor.close()
 
+    def call_function(self, name, arguments):
+        cursor = self.connection.cursor()
+        var = cursor.connection.gettype("TOPIC_TABLE")
+
+        if type(arguments) is not list:
+            result = cursor.callfunc(name,var, [arguments])
+        else:
+            result = cursor.callfunc(name,var, arguments)
+        self.connection.commit()
+        cursor.close()
+        return result
+
     def select_average_of_release(self, release):
         cursor = self.connection.cursor()
         query = "SELECT AVG(STAR_VALUE) FROM RATING INNER JOIN MUSIC_RELEASE ON RATING.RATED_RELEASE_ID =" \
