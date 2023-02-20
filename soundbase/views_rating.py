@@ -97,6 +97,7 @@ def edit(id):
 
 
 @bp.route('/ratings/delete/<id>', methods=['GET', 'POST'])
+@admin_login_required
 @requires_db_connection
 def delete(id):
     g.db.call_procedure("DELETE_RATING", [id])

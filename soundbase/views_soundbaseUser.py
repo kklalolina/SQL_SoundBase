@@ -228,19 +228,21 @@ def playlistdetails(id):
     releases_id = g.db.select_from_table("RELEASE_IN_LIST",
                                        select_list=["RELEASE_ID", "RELEASE_NO"],
                                        where_list=[{"LIST_ID": id}])[0]
-
+    print(releases_id)
     releases_id = [[x[0], x[1]] for x in releases_id]
     rows = []
 
     for i in releases_id:
         temp = g.db.select_from_table(["MUSIC_RELEASE","RELEASE_TYPE"],
                                       select_list=["RELEASE_ID","RELEASE_NAME","TYPE_NAME"],
+                                      where_list=[{"RELEASE_ID":i[0]}],
                                       join_list=[("RELEASE_TYPE_ID", "TYPE_ID", "INNER")])[0][0]
 
         temp = list(temp)
         temp.insert(0, i[1])
 
         rows.append(temp)
+        print(rows)
     artists_id = {}
     for row in rows:
         temp = g.db.select_from_table("ARTIST_OF_RELEASE",
@@ -289,7 +291,7 @@ def deleteRating(id, rid):
 @admin_not_allowed
 @login_required
 def deletePlaylist(id):
-    # TODO tutaj procedura
+    g.db.call_procedure("DELETE_RELEASE_LIST",[id])
     return redirect(url_for('views_soundbaseUser.playlists'))
 
 @bp.route('/user/playlist/add/<id>', methods=['POST','GET'])

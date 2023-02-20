@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, g
 from soundbase.auth import admin_login_required
 from soundbase import db
-import cx_Oracle
+import oracledb
 from soundbase.db import requires_db_connection
 
 bp = Blueprint("views_artist", __name__)
@@ -16,9 +16,9 @@ def artists():
         if search.isdigit():
            rows = g.db.select_from_table("ARTIST",
                                          where_list=[{"ARTIST_ID":search},
-                                                     {"%ARTIST_NAME":search}])[0]
+                                                     {"%ARTIST_NAME":search}])
         else:
-           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})[0]
+           rows = g.db.select_from_table("ARTIST", where_list={"%ARTIST_NAME":search})
            
         return render_template("admin/Artist/list.html", output=rows)
     rows = g.db.select_from_table("ARTIST")[0]
