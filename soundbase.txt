@@ -240,6 +240,19 @@ create public synonym edit_music_release for edit_music_release;
 create public synonym delete_music_release for delete_music_release;
 create public synonym add_release_to_list for add_release_to_list;
 create public synonym delete_release_from_list for delete_release_from_list;
+create public synonym DELETE_RELEASE_LIST for DELETE_RELEASE_LIST;
+
+----super important recommendation------
+CREATE PUBLIC SYNONYM TOPICS FOR PC_TOPIC_MANAGEMENT;
+GRANT EXECUTE ON TOPICS TO NORMALUSER, ADMINUSER;
+
+CREATE PUBLIC SYNONYM TOPIC FOR TOPIC;
+CREATE PUBLIC SYNONYM TOPIC_TABLE FOR TOPIC_TABLE;
+
+GRANT EXECUTE ON TOPIC TO ADMINUSER, NORMALUSER;
+GRANT EXECUTE ON TOPIC_TABLE TO ADMINUSER, NORMALUSER;
+-----end of super important-----
+
 grant execute on add_user to adminuser,entryuser;
 grant execute on edit_user to adminuser,normaluser;
 grant execute on delete_user to adminuser;
@@ -260,6 +273,8 @@ grant execute on edit_music_release to adminuser;
 grant execute on delete_music_release to adminuser;
 grant execute on add_release_to_list to adminuser,normaluser;
 grant execute on delete_release_from_list to adminuser,normaluser;
+grant execute on DELETE_RELEASE_LIST to adminuser,normaluser;
+
 ------------------------------PROCEDURES FOR SOUNDBASE_USERS------------------------------------------------------
 CREATE OR REPLACE PROCEDURE ADD_USER (
     p_username VARCHAR2,
@@ -444,10 +459,6 @@ END DELETE_RATING;
 
 
 
-alter session set "_ORACLE_SCRIPT"=true;
-CREATE USER user_12345 identified by mypassword;
-Grant create session to user_12345;
-
 ---------------------------MEANINGFUL PROCEDURES FOR PROJECT DEMONSTRATION------------------------------
 --TRACK HANDLING
 create or replace procedure add_track(
@@ -489,11 +500,10 @@ EXCEPTION
 END;  
 
 create or replace procedure delete_track(
-    p_track_id IN INTEGER)
+    p_track_id IN INTEGER,
+    p_release_id IN INTEGER)
 IS
-    TYPE RELEASE_COLLECTION IS TABLE OF INTEGER;
     l_track_no INTEGER;
-    l_release_collection RELEASE_COLLECTION;
     CURSOR track_to_move_up IS
         SELECT TRACK_ID, TRACK_NO, RELEASE_ID, ROWID
         FROM TRACKS_IN_RELEASE
@@ -504,14 +514,6 @@ BEGIN
     INTO l_track_no
     FROM TRACKS_IN_RELEASE
     WHERE TRACK_ID = p_track_id;
-    l_release_collection := RELEASE_COLLECTION();
-    FOR i IN (SELECT MUSIC_RELEASE.RELEASE_ID AS r_id
-              FROM MUSIC_RELEASE INNER JOIN TRACKS_IN_RELEASE
-              ON MUSIC_RELEASE.RELEASE_ID = TRACKS_IN_RELEASE.RELEASE_ID
-              WHERE TRACKS_IN_RELEASE.TRACK_ID = p_track_id) LOOP
-        l_release_collection.EXTEND;
-        l_release_collection(l_release_collection.LAST) := i.r_id;
-    END LOOP;
     
     DELETE FROM TRACK
     WHERE TRACK_ID = p_track_id;
@@ -519,11 +521,10 @@ BEGIN
     WHERE TRACK_ID = p_track_id;
     
     FOR track in track_to_move_up LOOP
-        IF track.track_no > l_track_no
-           AND track.track_id member of l_release_collection THEN
+        IF track.track_no > l_track_no THEN
            UPDATE TRACKS_IN_RELEASE
            SET track_no = track_no - 1
-           WHERE ROWID = track.ROWID;
+           WHERE ROWID = track.ROWID AND RELEASE_ID = p_release_id;
         END IF;
     END LOOP;
 END;
@@ -559,8 +560,22 @@ BEGIN
     SET RELEASE_NO = RELEASE_NO - 1
     WHERE RELEASE_NO > l_deleted_release_no AND LIST_ID = p_list_id;
 END;
+select * from release_in_list;
+
+execute delete_release_from_list(122,5)
+commit;
+---------DELETE RELEASE_LIST------------
+CREATE OR REPLACE PROCEDURE DELETE_RELEASE_LIST(
+    p_list_id IN RELEASE_LIST.LIST_ID%TYPE
+) AS
+BEGIN
+    DELETE FROM RELEASE_LIST WHERE LIST_ID = p_list_id;
+END;
 
 --Topic Handling
+select * from soundbase_users;
+select topics.get_topics(61) from dual;
+
 create type TOPIC as object (topic_type VARCHAR2(20),
         topic_id INTEGER,
         topic_score FLOAT
@@ -625,6 +640,7 @@ CREATE OR REPLACE PACKAGE BODY PC_TOPIC_MANAGEMENT AS
         return result_table;
     END;
 END PC_TOPIC_MANAGEMENT;
+
 --------CONSTRAINT REDEFINITION--------
 alter table tracks_in_release
 drop constraint TRACK_FK_TRACK
