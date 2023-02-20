@@ -21,11 +21,18 @@ def releases():
                                              join_list=[("RELEASE_TYPE_ID", "TYPE_ID", "INNER")],
                                              where_list=[{"RELEASE_ID": searchid}, {"%RELEASE_NAME": search},
                                                          {"%TYPE_NAME": search}])
+        for i in range(len(rows)):
+            rows[i] = list(rows[i])
+            rows[i][2]=str(rows[i][2])[:10]
+
         return render_template("admin/Release/list.html", output=rows)
 
     rows = g.db.select_from_table(["MUSIC_RELEASE", "RELEASE_TYPE"],
                                   select_list=["RELEASE_ID", "RELEASE_NAME", "RELEASE_DATE", "TYPE_NAME"],
                                   join_list=[("RELEASE_TYPE_ID", "TYPE_ID", "INNER")])[0]
+    for i in range(len(rows)):
+        rows[i] = list(rows[i])
+        rows[i][2] = str(rows[i][2])[:10]
     return render_template("admin/Release/list.html", output=rows)
 
 
@@ -128,7 +135,8 @@ def detailsSingle(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
 
     release, release_names = g.db.select_from_table("MUSIC_RELEASE", where_list={"RELEASE_ID": id})
-    release = release[0]
+    release = list(release[0])
+    release[2] = str(release[2])[:10]
 
     track_id = g.db.select_from_table("TRACKS_IN_RELEASE", where_list={"RELEASE_ID": id})[0][0][1]
 
@@ -294,7 +302,8 @@ def addTrack(id):
 def detailsAlbum(id):
     # TESTOWE POLACZENIE Z BAZA POKI NIEZROBIONE DB.PY
     release, release_names = g.db.select_from_table("MUSIC_RELEASE", where_list={"RELEASE_ID": id})
-    release = release[0]
+    release = list(release[0])
+    release[2]=str(release[2])[:10]
 
     tracks_id = g.db.select_from_table("TRACKS_IN_RELEASE",
                                        where_list={"RELEASE_ID": id},
@@ -307,7 +316,7 @@ def detailsAlbum(id):
         track = g.db.select_from_table("TRACK",
                                        where_list={"TRACK_ID": i})[0][0]
         tracks.append(track)
-    print(tracks)
+
 
     artists_id = g.db.select_from_table("ARTIST_OF_RELEASE", where_list={"RELEASE_ID": id})[0]
 
@@ -344,7 +353,7 @@ def detailsAlbum(id):
 @admin_login_required
 @requires_db_connection
 def deleteTrack(id, idr):
-    g.db.call_procedure('DELETE_TRACK', [id])
+    g.db.call_procedure('DELETE_TRACK', [id,idr])
 
     release, release_names = g.db.select_from_table("MUSIC_RELEASE",
                            where_list={"RELEASE_ID": idr})

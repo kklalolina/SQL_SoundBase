@@ -14,11 +14,20 @@ def ratings():
         search = request.form['SearchString']
         if not search.isdigit():  # we search only on digits, if not a digit then dont search coz sql will throw some errorrrr
             rows, names = g.db.select_from_table("RATING")
+            for i in range(len(rows)):
+                rows[i] = list(rows[i])
+                rows[i][2] = str(rows[i][2])[:10]
         else:
             rows, names = g.db.select_from_table("RATING", [{"RATING_ID": search}, {"SOUNDBASE_USERS_ID": search},
                                                             {"RATED_RELEASE_ID": search}, {"STAR_VALUE": search}])
+            for i in range(len(rows)):
+                rows[i] = list(rows[i])
+                rows[i][2] = str(rows[i][2])[:10]
         return render_template("admin/Rating/list.html", output=rows)
     rows, names = g.db.select_from_table("RATING")
+    for i in range(len(rows)):
+        rows[i] = list(rows[i])
+        rows[i][2] = str(rows[i][2])[:10]
 
     return render_template("admin/Rating/list.html", output=rows)
 
@@ -110,7 +119,9 @@ def delete(id):
 @requires_db_connection
 def details(id):
     rating_data, names = g.db.select_from_table("RATING", {"RATING_ID": id})
-    rating_data = rating_data[0]
+
+    rating_data = list(rating_data[0])
+    rating_data[2]=str(rating_data[2])[:10] # remove time from date
 
     username = g.db.select_from_table("SOUNDBASE_USERS",
                                       {"USER_ID": rating_data[names["SOUNDBASE_USERS_ID"]]},

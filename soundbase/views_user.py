@@ -25,9 +25,15 @@ def users():
                                       where_list=[{"USER_ID": searchid},
                                                   {"%USERNAME": search},
                                                   {"%USER_TYPE": searchtype}])[0]
+        for i in range(len(rows)):
+            rows[i] = list(rows[i])
+            rows[i][2]=str(rows[i][2])[:10] # remove time from date
 
         return render_template("admin/User/list.html", output=rows)
     rows = g.db.select_from_table("SOUNDBASE_USERS")[0]
+    for i in range(len(rows)):
+        rows[i] = list(rows[i])
+        rows[i][2] = str(rows[i][2])[:10]
 
     return render_template("admin/User/list.html", output=rows)
 
@@ -119,4 +125,8 @@ def delete(id):
 def details(id):
     userdata = g.db.select_from_table("SOUNDBASE_USERS",
                                       where_list={"USER_ID": id})[0][0]
+
+    userdata=list(userdata)
+    userdata[2]=str(userdata[2])[:10] # remove time from date
+
     return render_template("admin/User/details.html", output=userdata)

@@ -1,0 +1,76 @@
+{% extends "base.html" %} {% block title %}Home{% endblock %}
+{%block searchbar %}
+
+{% endblock %}
+{% block content %}
+
+<div class="container" style="padding-top:150px;margin-left:-100px">
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endfor %}
+    <h1 style="margin-left:-100px;margin-bottom:50px;">Hello {{g.user[1]}}</h1>
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="author-card pb-3">
+                <div class="wizard">
+                    <nav class="list-group list-group-flush">
+                        <a class="list-group-item list-group-item-dark list-group-item-action" href="{{ url_for('views_soundbaseUser.userdata') }}" style="color:black">
+                            Change password
+                        </a>
+                        <a class="list-group-item list-group-item-dark list-group-item-action" href="{{ url_for('views_soundbaseUser.ratings') }}" style="color:black" >
+                            Your ratings
+                        </a>
+                        <a class="list-group-item"  style="color:black">
+                            Your playlists
+                        </a>
+
+                    </nav>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8" style="">
+
+            <form class="form-inline my-2 my-lg-0" method="POST">
+                <input type = "text" class="form-control bg-dark text-white" name="playlistname" maxlength="20" placeholder="Name" />
+
+
+                    <select name="tag" class="custom-select">
+
+                        {% for tag in tags %}
+                            <option value="{{ tag[0] }}">{{ tag[1] }}</option>
+                        {% endfor %}
+                    </select>
+
+                <button class="btn btn-dark" type="submit">Add new</button>
+            </form>
+                <table class="table" style="color:white">
+                    <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                        <th>Creation date</th>
+                        <th></th>
+
+                </tr>
+                {% for row in output %}
+           <tr id="row{{row[1]}}" class="clickable" onclick="window.location.href='{{ url_for('views_soundbaseUser.playlistdetails', id=row[1]) }}';" onmouseout="document.getElementById('row{{row[1]}}').style.backgroundColor ='#26282B'" onmouseover="document.getElementById('row{{row[1]}}').style.backgroundColor ='#222426'" style="cursor: pointer;height:100px;padding: 10px 0;">
+                <td>{{ row[0] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td>
+                <a href="{{ url_for('views_soundbaseUser.deletePlaylist', id=row[1]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are You Sure To Delete?')">Delete</a>
+                </td>
+            </tr>
+
+            {% endfor %}
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+{% endblock %}
