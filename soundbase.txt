@@ -240,6 +240,7 @@ create public synonym edit_music_release for edit_music_release;
 create public synonym delete_music_release for delete_music_release;
 create public synonym add_release_to_list for add_release_to_list;
 create public synonym delete_release_from_list for delete_release_from_list;
+create public synonym DELETE_RELEASE_LIST for DELETE_RELEASE_LIST;
 grant execute on add_user to adminuser,entryuser;
 grant execute on edit_user to adminuser,normaluser;
 grant execute on delete_user to adminuser;
@@ -260,6 +261,7 @@ grant execute on edit_music_release to adminuser;
 grant execute on delete_music_release to adminuser;
 grant execute on add_release_to_list to adminuser,normaluser;
 grant execute on delete_release_from_list to adminuser,normaluser;
+grant execute on DELETE_RELEASE_LIST to adminuser,normaluser;
 ------------------------------PROCEDURES FOR SOUNDBASE_USERS------------------------------------------------------
 CREATE OR REPLACE PROCEDURE ADD_USER (
     p_username VARCHAR2,
@@ -444,10 +446,6 @@ END DELETE_RATING;
 
 
 
-alter session set "_ORACLE_SCRIPT"=true;
-CREATE USER user_12345 identified by mypassword;
-Grant create session to user_12345;
-
 ---------------------------MEANINGFUL PROCEDURES FOR PROJECT DEMONSTRATION------------------------------
 --TRACK HANDLING
 create or replace procedure add_track(
@@ -559,6 +557,19 @@ BEGIN
     SET RELEASE_NO = RELEASE_NO - 1
     WHERE RELEASE_NO > l_deleted_release_no AND LIST_ID = p_list_id;
 END;
+select * from release_in_list;
+
+execute delete_release_from_list(122,5)
+commit;
+---------DELETE RELEASE_LIST------------
+CREATE OR REPLACE PROCEDURE DELETE_RELEASE_LIST(
+    p_list_id IN RELEASE_LIST.LIST_ID%TYPE
+) AS
+BEGIN
+    DELETE FROM RELEASE_LIST WHERE LIST_ID = p_list_id;
+END;
+
+
 --------CONSTRAINT REDEFINITION--------
 alter table tracks_in_release
 drop constraint TRACK_FK_TRACK
