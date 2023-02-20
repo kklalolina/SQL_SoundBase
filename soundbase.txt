@@ -559,6 +559,72 @@ BEGIN
     SET RELEASE_NO = RELEASE_NO - 1
     WHERE RELEASE_NO > l_deleted_release_no AND LIST_ID = p_list_id;
 END;
+
+--Topic Handling
+create type TOPIC as object (topic_type VARCHAR2(20),
+        topic_id INTEGER,
+        topic_score FLOAT
+);
+CREATE TYPE TOPIC_TABLE is TABLE of TOPIC;
+
+CREATE OR REPLACE PACKAGE PC_TOPIC_MANAGEMENT AS
+    FUNCTION get_topics(
+        p_user_id INTEGER)
+    RETURN TOPIC_TABLE;
+END PC_TOPIC_MANAGEMENT;
+
+CREATE OR REPLACE PACKAGE BODY PC_TOPIC_MANAGEMENT AS
+    l_topic_table TOPIC_TABLE := TOPIC_TABLE();
+    FUNCTION get_topics (
+        p_user_id INTEGER)
+    RETURN topic_table IS result_table topic_table;
+    CURSOR c_genre_scores IS
+        SELECT a.GENRE_ID, AVG(c.star_value) as stars
+        FROM GENRE a INNER JOIN GENRE_OF_RELEASE b
+        ON a.genre_id = b.genre_id
+        INNER JOIN RATING c
+        ON b.release_id = c.rated_release_id
+        WHERE c.soundbase_users_id = p_user_id
+        GROUP BY a.GENRE_ID;
+    CURSOR c_tag_scores IS
+        SELECT d.TAG_ID, AVG(f.star_value) as stars
+        FROM DESCRIPTIVE_TAG d INNER JOIN TAG_OF_RELEASE e
+        ON d.tag_id = e.tag_id
+        INNER JOIN RATING f
+        ON e.release_id = f.rated_release_id
+        WHERE f.soundbase_users_id = p_user_id
+        GROUP BY d.TAG_ID;
+    CURSOR c_artist_scores IS
+        SELECT g.ARTIST_ID, AVG(j.star_value) as stars
+        FROM ARTIST g INNER JOIN ARTIST_OF_RELEASE h
+        on g.artist_id = h.artist_id
+        INNER JOIN RATING j
+        ON h.release_id = j.rated_release_id
+        WHERE j.soundbase_users_id = p_user_id
+        GROUP BY g.ARTIST_ID;
+    BEGIN
+        l_topic_table := topic_table();
+        for i in c_genre_scores LOOP
+            l_topic_table.extend;
+            l_topic_table(l_topic_table.last()) := topic('GENRE', i.genre_id, i.stars);
+        END LOOP;
+        for i in c_tag_scores LOOP
+            l_topic_table.extend;
+            l_topic_table(l_topic_table.last()) := topic('TAG', i.tag_id, i.stars);
+        END LOOP;
+        for i in c_artist_scores LOOP
+            l_topic_table.extend;
+            l_topic_table(l_topic_table.last()) := topic('ARTIST', i.artist_id, i.stars);
+        END LOOP;
+        SELECT CAST(
+            MULTISET(
+                SELECT * FROM TABLE(l_topic_table)
+                ORDER BY 3) as topic_table
+            ) 
+        into result_table from dual;
+        return result_table;
+    END;
+END PC_TOPIC_MANAGEMENT;
 --------CONSTRAINT REDEFINITION--------
 alter table tracks_in_release
 drop constraint TRACK_FK_TRACK
